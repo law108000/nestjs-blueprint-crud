@@ -1,0 +1,48 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Build tools
+tsconfig.json
+jest.config.js
+.eslintrc.js
+
+# Development files
+.env*
+
+# Testing
+coverage/
+*.spec.ts
+*.test.ts
+__tests__/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Dependencies
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Package managers
+yarn.lock
+pnpm-lock.yaml
+*.tgz
+
+# Temporary files
+tmp/
+temp/
+.nyc_output/

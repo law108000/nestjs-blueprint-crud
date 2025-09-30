@@ -1,0 +1,96 @@
+{
+  "name": "nestjs-blueprint-crud",
+  "version": "1.0.0",
+  "description": "A NestJS library for automatic CRUD operations with TypeORM, inspired by SailsJS Blueprint API and Waterline ORM",
+  "keywords": [
+    "nestjs",
+    "blueprint",
+    "sailsjs",
+    "waterline",
+    "typeorm",
+    "crud",
+    "rest-api",
+    "orm",
+    "typescript",
+    "decorators",
+    "dynamic-modules",
+    "query-builder",
+    "associations"
+  ],
+  "author": "law108000",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/law108000/nestjs-blueprint-crud.git"
+  },
+  "homepage": "https://github.com/law108000/nestjs-blueprint-crud#readme",
+  "bugs": {
+    "url": "https://github.com/law108000/nestjs-blueprint-crud/issues"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "pack": "npm pack",
+    "publish:dry-run": "npm publish --dry-run",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major",
+    "release:patch": "npm version patch && npm publish",
+    "release:minor": "npm version minor && npm publish",
+    "release:major": "npm version major && npm publish"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^10.0.0 || ^11.0.0",
+    "@nestjs/core": "^10.0.0 || ^11.0.0",
+    "@nestjs/swagger": "^7.0.0 || ^8.0.0",
+    "class-transformer": "^0.5.0",
+    "class-validator": "^0.14.0",
+    "reflect-metadata": "^0.1.13 || ^0.2.0",
+    "typeorm": "^0.3.0"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/swagger": "^11.2.0",
+    "@nestjs/testing": "^11.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.17",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "reflect-metadata": "^0.2.2",
+    "rimraf": "^5.0.0",
+    "ts-jest": "^29.0.0",
+    "ts-node": "^10.0.0",
+    "ts-node-dev": "^2.0.0",
+    "typeorm": "^0.3.27",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "uuid": "^11.1.0"
+  }
+}
