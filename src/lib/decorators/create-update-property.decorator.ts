@@ -1,6 +1,5 @@
 import 'reflect-metadata';
-import { applyDecorators } from '@nestjs/common';
-import { ApiPropertyOptional, ApiPropertyOptions, PickType } from '@nestjs/swagger';
+import { ApiPropertyOptional, PickType, type ApiPropertyOptions } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import { BaseEntity } from '../entities/base.entity';
@@ -20,7 +19,7 @@ const listOfCreateUpdateDto: {
   [key: string]: {
     CreateDto: new () => ICreateDto;
     UpdateDto: new () => IUpdateDto;
-  }
+  };
 } = {};
 
 export type CreateUpdatePropertyOptions = ApiPropertyOptions & {
@@ -49,9 +48,9 @@ type ApiCreateUpdatePropertyOptions = ApiPropertyOptions & {
 };
 
 export function ApiCreateUpdateOptional(
-  options: ApiCreateUpdatePropertyOptions = {}
+  options: ApiCreateUpdatePropertyOptions = {},
 ): PropertyDecorator {
-  const { anyOf: originalAnyOf, type: originalType, enum: originalEnum, isTenantBaseEntity, ...rest } = options;
+  const { type: originalType, isTenantBaseEntity } = options;
   if (typeof originalType === 'string') {
     options.type = originalType;
   }
@@ -64,11 +63,11 @@ export function ApiCreateUpdateOptional(
 
   if (options.enum) {
     const enumObj = options.enum as Record<string, string | number>;
-    const enumKeys = Object.keys(enumObj).filter((key) => isNaN(Number(key)));
-    const enumKeyValuePairs = enumKeys.map((key) => `${key}: ${enumObj[key]}`);
+    const enumKeys = Object.keys(enumObj).filter(key => isNaN(Number(key)));
+    const enumKeyValuePairs = enumKeys.map(key => `${key}: ${enumObj[key]}`);
     options.description = options.description
-      ? `${options.description}\n${enumKeyValuePairs.map((v) => `- ${v}`).join('\n')}`
-      : `${enumKeyValuePairs.map((v) => `- ${v}`).join('\n')}`;
+      ? `${options.description}\n${enumKeyValuePairs.map(v => `- ${v}`).join('\n')}`
+      : `${enumKeyValuePairs.map(v => `- ${v}`).join('\n')}`;
   }
 
   delete options.isTenantBaseEntity;
@@ -94,38 +93,44 @@ function generateSwaggerDtoForEntity(
   target: new () => BaseEntity,
   metaKey: string,
   dtoSuffix: string,
-  getMetadata?: (prototype: any, propertyKey: string) => any
+  getMetadata?: (prototype: any, propertyKey: string) => any,
 ): new () => ICreateDto | IUpdateDto {
   const metadataKeys = Reflect.getMetadataKeys(target.prototype)
-    .filter((key) => key.toString().includes(`@${metaKey}`))
-    .map((key) => key.split('@')[0]);
+    .filter(key => key.toString().includes(`@${metaKey}`))
+    .map(key => key.split('@')[0]);
 
   class Dto extends PickType(target, metadataKeys) implements ICreateDto, IUpdateDto {}
   Object.defineProperty(Dto, 'name', { value: `${target.name}${dtoSuffix}Dto` });
 
   for (const propertyKey of metadataKeys) {
     const metadata =
-      (getMetadata && getMetadata(target.prototype, propertyKey)) ||
+      getMetadata?.(target.prototype, propertyKey) ||
       Reflect.getMetadata(`${propertyKey}@${metaKey}`, target.prototype) ||
       {};
 
-    const { type, isISO8601, isTimestamp, isEntity, entityName } = metadata;
+    const { isISO8601, isTimestamp, isEntity } = metadata;
     const originalType = Reflect.getMetadata('design:type', target.prototype, propertyKey);
     const originalTypeName = originalType?.name?.toLowerCase();
-    const isTenantBaseEntity = BaseEntity.prototype.isPrototypeOf(originalType?.prototype);
+    const isTenantBaseEntity = originalType && originalType.prototype instanceof BaseEntity;
     const isEnum = !!metadata.enum;
 
     Expose()(Dto.prototype, propertyKey);
     IsOptional()(Dto.prototype, propertyKey);
 
     if (isISO8601) {
-      Transform(({ value }) => {
-        return value ? new Date(value).toISOString() : value;
-      }, { toClassOnly: true })(Dto.prototype, propertyKey);
+      Transform(
+        ({ value }) => {
+          return value ? new Date(value).toISOString() : value;
+        },
+        { toClassOnly: true },
+      )(Dto.prototype, propertyKey);
     } else if (isTimestamp) {
-      Transform(({ value }) => {
-        return value ? new Date(value).getTime() : value;
-      }, { toClassOnly: true })(Dto.prototype, propertyKey);
+      Transform(
+        ({ value }) => {
+          return value ? new Date(value).getTime() : value;
+        },
+        { toClassOnly: true },
+      )(Dto.prototype, propertyKey);
     }
 
     if (isTenantBaseEntity || isEntity) {
@@ -154,19 +159,27 @@ export function generateSwaggerCreateDtoForEntity(target: new () => BaseEntity) 
   if (listOfCreateUpdateDto[target.name]) {
     return listOfCreateUpdateDto[target.name].CreateDto;
   }
-  return generateSwaggerDtoForEntity(target, CREATE_PROPERTY_METADATA_KEY, 'Create', getCreatePropertyMetadata);
+  return generateSwaggerDtoForEntity(
+    target,
+    CREATE_PROPERTY_METADATA_KEY,
+    'Create',
+    getCreatePropertyMetadata,
+  );
 }
 
-export function generateSwaggerUpdateDtoForEntity<T extends BaseEntity>(
-  target: new () => T
-) {
+export function generateSwaggerUpdateDtoForEntity<T extends BaseEntity>(target: new () => T) {
   if (listOfCreateUpdateDto[target.name]) {
     return listOfCreateUpdateDto[target.name].UpdateDto;
   }
-  return generateSwaggerDtoForEntity(target, UPDATE_PROPERTY_METADATA_KEY, 'Update', getUpdatePropertyMetadata);
+  return generateSwaggerDtoForEntity(
+    target,
+    UPDATE_PROPERTY_METADATA_KEY,
+    'Update',
+    getUpdatePropertyMetadata,
+  );
 }
 
-export function generateSwaggerCreateUpdateDtoForEntity(target: new () => BaseEntity) : {
+export function generateSwaggerCreateUpdateDtoForEntity(target: new () => BaseEntity): {
   CreateDto: new () => ICreateDto;
   UpdateDto: new () => IUpdateDto;
 } {

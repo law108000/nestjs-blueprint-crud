@@ -1,34 +1,31 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Repository, FindOptionsWhere, In } from 'typeorm';
+import { In, type Repository, type FindOptionsWhere } from 'typeorm';
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { BaseEntity } from '../entities/base.entity';
+import type { BaseEntity } from '../entities/base.entity';
 import { WaterlineQueryService } from './waterline-query.service';
-import { Criteria } from '../interfaces/crud.interfaces';
+import type { Criteria } from '../interfaces/crud.interfaces';
 
 @Injectable()
 export class BaseService<T extends BaseEntity> {
   private repository: Repository<T>;
   protected readonly logger = new Logger(BaseService.name);
 
-  constructor(
-    private readonly waterlineQueryService: WaterlineQueryService<T>
-  ) {
+  constructor(private readonly waterlineQueryService: WaterlineQueryService<T>) {
     this.repository = waterlineQueryService.getRepository();
   }
 
   async findOne(id: number, populate?: string, select?: string, omit?: string): Promise<T> {
-    if (id == null) {
+    if (id === null) {
       throw new NotFoundException('ID must be provided');
     }
 
     const entities = await this.waterlineQueryService.findWithModifiers({
       where: { id },
-      populate:
-        populate 
-          ? populate.split(',').map(rel => rel.trim()) 
-          : this.repository.metadata.relations.map(rel => rel.propertyName),
-      select: select,
-      omit: omit,
+      populate: populate
+        ? populate.split(',').map(rel => rel.trim())
+        : this.repository.metadata.relations.map(rel => rel.propertyName),
+      select,
+      omit,
       limit: 1,
     });
 
@@ -39,10 +36,10 @@ export class BaseService<T extends BaseEntity> {
     return entities[0];
   }
 
-  async findOneBy(where: Criteria<T>["where"], populate?: string|string[]): Promise<T|null> {
+  async findOneBy(where: Criteria<T>['where'], populate?: string | string[]): Promise<T | null> {
     if (!populate) {
       populate = [];
-      const relations = this.repository.metadata.relations;
+      const { relations } = this.repository.metadata;
       relations.forEach(relation => {
         (populate as string[]).push(relation.propertyName);
       });
@@ -51,7 +48,7 @@ export class BaseService<T extends BaseEntity> {
     }
 
     const entities = await this.waterlineQueryService.findWithModifiers({
-      where: where,
+      where,
       populate,
       limit: 1,
     });
@@ -75,23 +72,23 @@ export class BaseService<T extends BaseEntity> {
     return this.waterlineQueryService.findWithModifiers({
       where: { id: { in: ids } },
       populate: populate ? populate.split(',').map(rel => rel.trim()) : undefined,
-      select: select,
-      omit: omit,
+      select,
+      omit,
     });
   }
 
   async create(entityData: Partial<T>): Promise<T> {
     this.logger.debug('Creating entity with data:', entityData);
-    
+
     const entity = this.repository.create(entityData as any);
     const savedEntity = await this.repository.save(entity);
-    
+
     return this.findOne((savedEntity as any).id);
   }
 
   async update(id: number, entityData: Partial<T>): Promise<T> {
     this.logger.debug(`Updating entity ${id} with data:`, entityData);
-    
+
     const existingEntity = await this.findOne(id);
     if (!existingEntity) {
       throw new NotFoundException(`Entity with id ${id} not found`);
@@ -103,7 +100,7 @@ export class BaseService<T extends BaseEntity> {
 
   async remove(id: number): Promise<T> {
     this.logger.debug(`Removing entity with id: ${id}`);
-    
+
     const entity = await this.findOne(id);
     if (!entity) {
       throw new NotFoundException(`Entity with id ${id} not found`);
@@ -115,24 +112,27 @@ export class BaseService<T extends BaseEntity> {
 
   async bulkCreate(entitiesData: Partial<T>[]): Promise<T[]> {
     this.logger.debug('Bulk creating entities:', entitiesData);
-    
+
     const entities = this.repository.create(entitiesData as any);
     const savedEntities = await this.repository.save(entities);
-    
+
     const ids = savedEntities.map(entity => (entity as any).id);
     return this.findByIds(ids);
   }
 
   async bulkUpdate(ids: number[], entityData: Partial<T>): Promise<T[]> {
     this.logger.debug(`Bulk updating entities ${ids.join(', ')} with data:`, entityData);
-    
-    await this.repository.update({ id: In(ids) } as FindOptionsWhere<T>, entityData as QueryDeepPartialEntity<T>);
+
+    await this.repository.update(
+      { id: In(ids) } as FindOptionsWhere<T>,
+      entityData as QueryDeepPartialEntity<T>,
+    );
     return this.findByIds(ids);
   }
 
   async bulkRemove(ids: number[]): Promise<T[]> {
     this.logger.debug(`Bulk removing entities with ids: ${ids.join(', ')}`);
-    
+
     const entities = await this.findByIds(ids);
     await this.repository.softDelete(ids);
     return entities;
@@ -150,7 +150,7 @@ export class BaseService<T extends BaseEntity> {
 
   async restore(id: number): Promise<T> {
     this.logger.debug(`Restoring entity with id: ${id}`);
-    
+
     await this.repository.restore(id);
     return this.findOne(id);
   }
