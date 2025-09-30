@@ -1,9 +1,15 @@
-import { PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, type ValueTransformer } from 'typeorm';
+import {
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  type ValueTransformer,
+} from 'typeorm';
 import { IsOptional } from 'class-validator';
 
 export class DateTransformer implements ValueTransformer {
   private allowNull: boolean;
-  
+
   constructor(allowNull: boolean = false) {
     this.allowNull = allowNull;
   }
@@ -65,7 +71,7 @@ export abstract class BaseEntity {
   @CreateDateColumn({
     type: 'bigint',
     transformer: new DateTransformer(),
-    comment: 'Record creation timestamp'
+    comment: 'Record creation timestamp',
   })
   @IsOptional()
   createdAt?: number;
@@ -73,7 +79,7 @@ export abstract class BaseEntity {
   @UpdateDateColumn({
     type: 'bigint',
     transformer: new DateTransformer(),
-    comment: 'Record last update timestamp'
+    comment: 'Record last update timestamp',
   })
   @IsOptional()
   updatedAt?: number;
@@ -81,7 +87,7 @@ export abstract class BaseEntity {
   @DeleteDateColumn({
     type: 'bigint',
     transformer: new DateTransformer(true),
-    comment: 'Record deletion timestamp (soft delete)'
+    comment: 'Record deletion timestamp (soft delete)',
   })
   @IsOptional()
   deletedAt?: number | null;

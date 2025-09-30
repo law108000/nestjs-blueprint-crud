@@ -3,7 +3,11 @@ import { ApiPropertyOptional, PickType, type ApiPropertyOptions } from '@nestjs/
 import { Expose } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import { BaseEntity } from '../entities/base.entity';
-import { IQueryCriteria, type IListQueryDto, type ICountQueryDto } from '../interfaces/crud.interfaces';
+import {
+  IQueryCriteria,
+  type IListQueryDto,
+  type ICountQueryDto,
+} from '../interfaces/crud.interfaces';
 
 const QUERY_PROPERTY_METADATA_KEY = 'QUERY_PROPERTY_METADATA_KEY';
 
@@ -12,7 +16,7 @@ const listOfRecordsDto: {
     QueryCriteria: new () => IQueryCriteria;
     CountQueryDto: new () => ICountQueryDto;
     ListQueryDto: new () => IListQueryDto;
-  }
+  };
 } = {};
 
 export type QueryPropertyOptions = ApiPropertyOptions & {
@@ -20,10 +24,7 @@ export type QueryPropertyOptions = ApiPropertyOptions & {
   isTimestamp?: boolean;
   isEntity?: boolean;
   entityName?: string;
-} & (
-  | { isEntity: true; entityName: string }
-  | { isEntity?: false | undefined }
-);
+} & ({ isEntity: true; entityName: string } | { isEntity?: false | undefined });
 
 export function QueryProperty(options: QueryPropertyOptions) {
   return function (target: BaseEntity, propertyKey: string) {
@@ -41,15 +42,17 @@ export type ApiWhereCriteriaPropertyOptions = ApiPropertyOptions & {
   isEntity?: boolean;
 };
 
-export function ApiWhereCriteriaOptional(options: ApiWhereCriteriaPropertyOptions = {}): PropertyDecorator {
+export function ApiWhereCriteriaOptional(
+  options: ApiWhereCriteriaPropertyOptions = {},
+): PropertyDecorator {
   const { anyOf: originalAnyOf, type: originalType, isEntity } = options;
 
-  const type: string = isEntity ? 'number' : originalType as string;
+  const type: string = isEntity ? 'number' : (originalType as string);
 
   if (options.enum) {
     const enumObj = options.enum as Record<string, string | number>;
-    const enumKeys = Object.keys(enumObj).filter((key) => isNaN(Number(key)));
-    const enumKeyValuePairs = enumKeys.map((key) => `${key}: ${enumObj[key]}`);
+    const enumKeys = Object.keys(enumObj).filter(key => isNaN(Number(key)));
+    const enumKeyValuePairs = enumKeys.map(key => `${key}: ${enumObj[key]}`);
     options.description += `\n${enumKeyValuePairs.map((value: string) => `- ${value}`).join('\n')}`;
   }
 
@@ -61,23 +64,21 @@ export function ApiWhereCriteriaOptional(options: ApiWhereCriteriaPropertyOption
         { type },
         {
           type: 'object',
-          description:
-            `Filter records using operator-based criteria for boolean:
+          description: `Filter records using operator-based criteria for boolean:
 - "=": ${type}
 - "!=": ${type}`,
         },
       ],
     });
-  } 
-    return ApiPropertyOptional({
-      ...options,
-      anyOf: [
-        ...(originalAnyOf || []),
-        { type },
-        {
-          type: 'object',
-          description:
-            `Filter records using operator-based criteria:
+  }
+  return ApiPropertyOptional({
+    ...options,
+    anyOf: [
+      ...(originalAnyOf || []),
+      { type },
+      {
+        type: 'object',
+        description: `Filter records using operator-based criteria:
 - '<': ${type}
 - '<=': ${type}
 - '>': ${type}
@@ -88,17 +89,18 @@ export function ApiWhereCriteriaOptional(options: ApiWhereCriteriaPropertyOption
 - contains: ${type}
 - startsWith: ${type}
 - endsWith: ${type}`,
-        },
-      ],
-    });
-  
+      },
+    ],
+  });
 }
 
 export type KeyOfType<Type, ValueType> = keyof {
   [Key in keyof Type as Type[Key] extends ValueType ? Key : never]: any;
 };
 
-export function generateSwaggerQueryDtoForEntity<T extends BaseEntity>(target: new () => T): {
+export function generateSwaggerQueryDtoForEntity<T extends BaseEntity>(
+  target: new () => T,
+): {
   QueryCriteria: new () => IQueryCriteria;
   CountQueryDto: new () => ICountQueryDto;
   ListQueryDto: new () => IListQueryDto;
@@ -107,21 +109,21 @@ export function generateSwaggerQueryDtoForEntity<T extends BaseEntity>(target: n
     return listOfRecordsDto[target.name];
   }
 
-  const metadataKeys = Reflect.getMetadataKeys(target.prototype).filter(key =>
-    key.toString().includes(`@${QUERY_PROPERTY_METADATA_KEY}`)
-  ).map(key => key.split('@')[0]);
+  const metadataKeys = Reflect.getMetadataKeys(target.prototype)
+    .filter(key => key.toString().includes(`@${QUERY_PROPERTY_METADATA_KEY}`))
+    .map(key => key.split('@')[0]);
 
   class QueryCriteria extends PickType(target, metadataKeys) implements IQueryCriteria {
     @ApiPropertyOptional({
       type: () => [QueryCriteria],
-      description: 'AND conditions'
+      description: 'AND conditions',
     })
     @IsOptional()
     and?: IQueryCriteria[];
 
     @ApiPropertyOptional({
       type: () => [QueryCriteria],
-      description: 'OR conditions'
+      description: 'OR conditions',
     })
     @IsOptional()
     or?: IQueryCriteria[];
@@ -162,7 +164,7 @@ export function generateSwaggerQueryDtoForEntity<T extends BaseEntity>(target: n
   class CountQueryDto implements ICountQueryDto {
     @ApiPropertyOptional({
       type: () => QueryCriteria,
-      description: 'Filter criteria'
+      description: 'Filter criteria',
     })
     @IsOptional()
     where?: IQueryCriteria;
@@ -173,49 +175,49 @@ export function generateSwaggerQueryDtoForEntity<T extends BaseEntity>(target: n
   class ListQueryDto implements IListQueryDto {
     @ApiPropertyOptional({
       type: () => QueryCriteria,
-      description: 'Filter criteria'
+      description: 'Filter criteria',
     })
     @IsOptional()
     where?: IQueryCriteria;
 
     @ApiPropertyOptional({
       type: 'number',
-      description: 'Maximum number of records to return'
+      description: 'Maximum number of records to return',
     })
     @IsOptional()
     limit?: number;
 
     @ApiPropertyOptional({
       type: 'number',
-      description: 'Number of records to skip'
+      description: 'Number of records to skip',
     })
     @IsOptional()
     skip?: number;
 
     @ApiPropertyOptional({
       type: 'string',
-      description: 'Sort criteria'
+      description: 'Sort criteria',
     })
     @IsOptional()
     sort?: string;
 
     @ApiPropertyOptional({
       type: 'string',
-      description: 'Fields to select'
+      description: 'Fields to select',
     })
     @IsOptional()
     select?: string;
 
     @ApiPropertyOptional({
       type: 'string',
-      description: 'Fields to omit'
+      description: 'Fields to omit',
     })
     @IsOptional()
     omit?: string;
 
     @ApiPropertyOptional({
       type: 'string',
-      description: 'Relations to populate'
+      description: 'Relations to populate',
     })
     @IsOptional()
     populate?: string;

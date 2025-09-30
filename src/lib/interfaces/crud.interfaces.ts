@@ -12,21 +12,34 @@ export interface CountCriteria<T = any> {
   where?: EntityWhereCriteria<T> | object;
 }
 
-export type Modifier = '<' | '<=' | '>' | '>=' | '!=' | 'in' | 'nin' | 'contains' | 'startsWith' | 'endsWith';
+export type Modifier =
+  | '<'
+  | '<='
+  | '>'
+  | '>='
+  | '!='
+  | 'in'
+  | 'nin'
+  | 'contains'
+  | 'startsWith'
+  | 'endsWith';
 
 export type EntityWhereCriteria<T> = {
-  [P in keyof T]?: any | T[P] | {
-    '<'?: T[P];
-    '<='?: T[P];
-    '>'?: T[P];
-    '>='?: T[P];
-    '!='?: T[P];
-    in?: T[P][];
-    nin?: T[P][];
-    contains?: string;
-    startsWith?: string;
-    endsWith?: string;
-  };
+  [P in keyof T]?:
+    | any
+    | T[P]
+    | {
+        '<'?: T[P];
+        '<='?: T[P];
+        '>'?: T[P];
+        '>='?: T[P];
+        '!='?: T[P];
+        in?: T[P][];
+        nin?: T[P][];
+        contains?: string;
+        startsWith?: string;
+        endsWith?: string;
+      };
 } & {
   and?: EntityWhereCriteria<T>[];
   or?: EntityWhereCriteria<T>[];

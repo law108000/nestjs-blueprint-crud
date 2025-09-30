@@ -3,7 +3,9 @@ import type { DataSource } from 'typeorm';
 import type { BaseEntity } from '../entities/base.entity';
 import { WaterlineQueryService } from '../services/waterline-query.service';
 
-export function getWaterlineQueryServiceInjectToken<T extends BaseEntity>(entity: new () => T): string {
+export function getWaterlineQueryServiceInjectToken<T extends BaseEntity>(
+  entity: new () => T,
+): string {
   return `${entity.name}WaterlineQueryService`;
 }
 

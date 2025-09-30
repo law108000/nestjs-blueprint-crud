@@ -16,19 +16,16 @@ describe('BaseService', () => {
       create: jest.fn(),
       remove: jest.fn(),
       metadata: {
-        relations: [
-          { propertyName: 'relation1' },
-          { propertyName: 'relation2' }
-        ]
-      }
+        relations: [{ propertyName: 'relation1' }, { propertyName: 'relation2' }],
+      },
     };
-    
+
     mockWaterlineQueryService = {
       getRepository: jest.fn().mockReturnValue(mockRepository),
       findWithModifiers: jest.fn().mockResolvedValue([]),
       countWithModifiers: jest.fn().mockResolvedValue(0),
     };
-    
+
     service = new BaseService(mockWaterlineQueryService);
   });
 
@@ -66,7 +63,7 @@ describe('BaseService', () => {
     it('should create and save entity', async () => {
       const data = { name: 'test' };
       const entity = { id: 1, ...data };
-      
+
       mockRepository.create.mockReturnValue(entity);
       mockRepository.save.mockResolvedValue(entity);
       // Mock findOne to return the created entity when called after creation

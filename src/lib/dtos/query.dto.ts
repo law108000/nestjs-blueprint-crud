@@ -6,7 +6,7 @@ export class ListQueryParamsRequestDto {
   @ApiPropertyOptional({
     description: 'Filter criteria as JSON string',
     type: 'string',
-    example: '{"name":"John","age":{">=":18}}'
+    example: '{"name":"John","age":{">=":18}}',
   })
   @IsOptional()
   @IsString()
@@ -15,7 +15,7 @@ export class ListQueryParamsRequestDto {
   @ApiPropertyOptional({
     description: 'Maximum number of records to return',
     type: 'number',
-    example: 10
+    example: 10,
   })
   @IsOptional()
   @Type(() => Number)
@@ -25,7 +25,7 @@ export class ListQueryParamsRequestDto {
   @ApiPropertyOptional({
     description: 'Number of records to skip',
     type: 'number',
-    example: 0
+    example: 0,
   })
   @IsOptional()
   @Type(() => Number)
@@ -35,7 +35,7 @@ export class ListQueryParamsRequestDto {
   @ApiPropertyOptional({
     description: 'Sort criteria (field ASC|DESC)',
     type: 'string',
-    example: 'name ASC'
+    example: 'name ASC',
   })
   @IsOptional()
   @IsString()
@@ -44,7 +44,7 @@ export class ListQueryParamsRequestDto {
   @ApiPropertyOptional({
     description: 'Fields to select (comma-separated)',
     type: 'string',
-    example: 'id,name,email'
+    example: 'id,name,email',
   })
   @IsOptional()
   @IsString()
@@ -53,7 +53,7 @@ export class ListQueryParamsRequestDto {
   @ApiPropertyOptional({
     description: 'Fields to omit (comma-separated)',
     type: 'string',
-    example: 'password,createdAt'
+    example: 'password,createdAt',
   })
   @IsOptional()
   @IsString()
@@ -62,7 +62,7 @@ export class ListQueryParamsRequestDto {
   @ApiPropertyOptional({
     description: 'Relations to populate (comma-separated)',
     type: 'string',
-    example: 'user,category'
+    example: 'user,category',
   })
   @IsOptional()
   @IsString()
@@ -73,7 +73,7 @@ export class GetQueryParamsRequestDto {
   @ApiPropertyOptional({
     description: 'Fields to select (comma-separated)',
     type: 'string',
-    example: 'id,name,email'
+    example: 'id,name,email',
   })
   @IsOptional()
   @IsString()
@@ -82,7 +82,7 @@ export class GetQueryParamsRequestDto {
   @ApiPropertyOptional({
     description: 'Fields to omit (comma-separated)',
     type: 'string',
-    example: 'password,createdAt'
+    example: 'password,createdAt',
   })
   @IsOptional()
   @IsString()
@@ -91,7 +91,7 @@ export class GetQueryParamsRequestDto {
   @ApiPropertyOptional({
     description: 'Relations to populate (comma-separated)',
     type: 'string',
-    example: 'user,category'
+    example: 'user,category',
   })
   @IsOptional()
   @IsString()
@@ -102,7 +102,7 @@ export class CountRequestDto {
   @ApiPropertyOptional({
     description: 'Filter criteria as JSON string',
     type: 'string',
-    example: '{"name":"John","age":{">=":18}}'
+    example: '{"name":"John","age":{">=":18}}',
   })
   @IsOptional()
   @IsString()
@@ -113,7 +113,7 @@ export class ReplaceAssociationsDto {
   @ApiPropertyOptional({
     description: 'Array of IDs to associate',
     type: [Number],
-    example: [1, 2, 3]
+    example: [1, 2, 3],
   })
   @IsOptional()
   @Type(() => Number)

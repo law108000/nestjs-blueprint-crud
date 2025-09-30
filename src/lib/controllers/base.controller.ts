@@ -1,35 +1,35 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Patch, 
-  Delete, 
-  Param, 
-  Body, 
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
   Query,
-  HttpCode, 
-  Logger, 
-  ClassSerializerInterceptor, 
-  UseInterceptors 
+  HttpCode,
+  Logger,
+  ClassSerializerInterceptor,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { BaseService } from '../services/base.service';
 import type { BaseEntity } from '../entities/base.entity';
 import { ValidateIdPipe } from '../pipes/validate-id.pipe';
-import { 
-  ListQueryParamsRequestDto, 
-  GetQueryParamsRequestDto, 
+import {
+  ListQueryParamsRequestDto,
+  GetQueryParamsRequestDto,
   CountRequestDto,
   CreateRequestDto,
-  UpdateRequestDto
+  UpdateRequestDto,
 } from '../dtos/query.dto';
 
 @Controller()
 export class BaseController<T extends BaseEntity> {
   protected readonly logger = new Logger(BaseController.name);
-  
+
   constructor(protected readonly baseService: BaseService<T>) {}
-  
+
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
   @ApiOperation({ summary: 'Find all entities' })
@@ -52,10 +52,14 @@ export class BaseController<T extends BaseEntity> {
 
   @Get('count')
   @ApiOperation({ summary: 'Count entities' })
-  @ApiResponse({ status: 200, description: 'Count of entities', schema: { type: 'object', properties: { count: { type: 'number' } } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Count of entities',
+    schema: { type: 'object', properties: { count: { type: 'number' } } },
+  })
   async count(@Query() query: CountRequestDto): Promise<{ count: number }> {
     const { where } = query;
-    
+
     const criteria = {
       where: where ? JSON.parse(where) : undefined,
     };
@@ -71,8 +75,8 @@ export class BaseController<T extends BaseEntity> {
   @ApiResponse({ status: 200, description: 'Entity found' })
   @ApiResponse({ status: 404, description: 'Entity not found' })
   async findOne(
-    @Param('id', ValidateIdPipe) id: number, 
-    @Query() query: GetQueryParamsRequestDto
+    @Param('id', ValidateIdPipe) id: number,
+    @Query() query: GetQueryParamsRequestDto,
   ): Promise<T> {
     const { select, omit, populate } = query;
     return this.baseService.findOne(id, populate, select, omit);
@@ -95,8 +99,8 @@ export class BaseController<T extends BaseEntity> {
   @ApiResponse({ status: 200, description: 'Entity updated successfully' })
   @ApiResponse({ status: 404, description: 'Entity not found' })
   async update(
-    @Param('id', ValidateIdPipe) id: number, 
-    @Body() entity: UpdateRequestDto
+    @Param('id', ValidateIdPipe) id: number,
+    @Body() entity: UpdateRequestDto,
   ): Promise<T> {
     return this.baseService.update(id, entity as Partial<T>);
   }
@@ -124,10 +128,7 @@ export class BaseController<T extends BaseEntity> {
   @Patch('bulk')
   @ApiOperation({ summary: 'Update multiple entities' })
   @ApiResponse({ status: 200, description: 'Entities updated successfully', isArray: true })
-  async bulkUpdate(
-    @Query('ids') ids: string,
-    @Body() entity: UpdateRequestDto
-  ): Promise<T[]> {
+  async bulkUpdate(@Query('ids') ids: string, @Body() entity: UpdateRequestDto): Promise<T[]> {
     const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
     return this.baseService.bulkUpdate(idArray, entity as Partial<T>);
   }

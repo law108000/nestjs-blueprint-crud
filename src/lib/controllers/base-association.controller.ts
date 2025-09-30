@@ -1,24 +1,24 @@
-import { 
-  Controller, 
-  Get, 
-  Put, 
-  Delete, 
-  Param, 
-  Body, 
-  Query, 
-  Logger, 
-  ClassSerializerInterceptor, 
+import {
+  Controller,
+  Get,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Query,
+  Logger,
+  ClassSerializerInterceptor,
   UseInterceptors,
-  Inject
+  Inject,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { BaseAssociationService } from '../services/base-association.service';
 import type { BaseEntity } from '../entities/base.entity';
 import { ValidateIdPipe } from '../pipes/validate-id.pipe';
-import { 
-  ListQueryParamsRequestDto, 
+import {
+  ListQueryParamsRequestDto,
   CountRequestDto,
-  ReplaceAssociationsDto
+  ReplaceAssociationsDto,
 } from '../dtos/query.dto';
 
 @Controller()
@@ -27,7 +27,7 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
 
   constructor(
     private readonly baseAssociationService: BaseAssociationService<Parent, Child>,
-    @Inject('ASSOCIATION_NAME') private readonly association: string
+    @Inject('ASSOCIATION_NAME') private readonly association: string,
   ) {}
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -38,7 +38,7 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
   @ApiResponse({ status: 200, description: 'Associated entities', isArray: true })
   async findAssociations(
     @Param('id', ValidateIdPipe) id: number,
-    @Query() query: ListQueryParamsRequestDto
+    @Query() query: ListQueryParamsRequestDto,
   ): Promise<Child[]> {
     const { where, limit, skip, sort, select, omit, populate } = query;
 
@@ -59,18 +59,26 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
   @ApiOperation({ summary: 'Count associated entities' })
   @ApiParam({ name: 'id', type: 'number', description: 'Parent entity ID' })
   @ApiParam({ name: 'association', type: 'string', description: 'Association name' })
-  @ApiResponse({ status: 200, description: 'Count of associated entities', schema: { type: 'object', properties: { count: { type: 'number' } } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Count of associated entities',
+    schema: { type: 'object', properties: { count: { type: 'number' } } },
+  })
   async countAssociations(
     @Param('id', ValidateIdPipe) id: number,
-    @Query() query: CountRequestDto
+    @Query() query: CountRequestDto,
   ): Promise<{ count: number }> {
     const { where } = query;
-    
+
     const criteria = {
       where: where ? JSON.parse(where) : undefined,
     };
 
-    const count = await this.baseAssociationService.countAssociations(id, this.association, criteria);
+    const count = await this.baseAssociationService.countAssociations(
+      id,
+      this.association,
+      criteria,
+    );
     return { count };
   }
 
@@ -83,7 +91,7 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
   @ApiResponse({ status: 200, description: 'Association added successfully' })
   async addAssociation(
     @Param('id', ValidateIdPipe) id: number,
-    @Param('fk', ValidateIdPipe) fk: number
+    @Param('fk', ValidateIdPipe) fk: number,
   ): Promise<Parent> {
     return this.baseAssociationService.addAssociation(id, this.association, fk);
   }
@@ -96,8 +104,8 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
   @ApiBody({ type: ReplaceAssociationsDto })
   @ApiResponse({ status: 200, description: 'Associations replaced successfully' })
   async replaceAssociations(
-    @Param('id', ValidateIdPipe) id: number, 
-    @Body() body: ReplaceAssociationsDto
+    @Param('id', ValidateIdPipe) id: number,
+    @Body() body: ReplaceAssociationsDto,
   ): Promise<Parent> {
     const { ids = [] } = body;
     return this.baseAssociationService.replaceAssociations(id, this.association, ids);
@@ -112,7 +120,7 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
   @ApiResponse({ status: 200, description: 'Association removed successfully' })
   async removeAssociation(
     @Param('id', ValidateIdPipe) id: number,
-    @Param('fk', ValidateIdPipe) fk: number
+    @Param('fk', ValidateIdPipe) fk: number,
   ): Promise<Parent> {
     return this.baseAssociationService.removeAssociation(id, this.association, fk);
   }
