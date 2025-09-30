@@ -1,6 +1,5 @@
 import 'reflect-metadata';
-import { applyDecorators } from '@nestjs/common';
-import { ApiPropertyOptional, ApiPropertyOptions, PickType } from '@nestjs/swagger';
+import { ApiPropertyOptional, PickType, type ApiPropertyOptions } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import { BaseEntity } from '../entities/base.entity';
@@ -51,7 +50,7 @@ type ApiCreateUpdatePropertyOptions = ApiPropertyOptions & {
 export function ApiCreateUpdateOptional(
   options: ApiCreateUpdatePropertyOptions = {}
 ): PropertyDecorator {
-  const { anyOf: originalAnyOf, type: originalType, enum: originalEnum, isTenantBaseEntity, ...rest } = options;
+  const { type: originalType, isTenantBaseEntity } = options;
   if (typeof originalType === 'string') {
     options.type = originalType;
   }
@@ -105,14 +104,14 @@ function generateSwaggerDtoForEntity(
 
   for (const propertyKey of metadataKeys) {
     const metadata =
-      (getMetadata && getMetadata(target.prototype, propertyKey)) ||
+      (getMetadata?.(target.prototype, propertyKey)) ||
       Reflect.getMetadata(`${propertyKey}@${metaKey}`, target.prototype) ||
       {};
 
-    const { type, isISO8601, isTimestamp, isEntity, entityName } = metadata;
+    const { isISO8601, isTimestamp, isEntity } = metadata;
     const originalType = Reflect.getMetadata('design:type', target.prototype, propertyKey);
     const originalTypeName = originalType?.name?.toLowerCase();
-    const isTenantBaseEntity = BaseEntity.prototype.isPrototypeOf(originalType?.prototype);
+    const isTenantBaseEntity = originalType && (originalType.prototype instanceof BaseEntity);
     const isEnum = !!metadata.enum;
 
     Expose()(Dto.prototype, propertyKey);

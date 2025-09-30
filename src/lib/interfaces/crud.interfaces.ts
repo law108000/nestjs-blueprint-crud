@@ -9,7 +9,7 @@ export interface Criteria<T = any> {
 }
 
 export interface CountCriteria<T = any> {
-  where?: EntityWhereCriteria<T> | {};
+  where?: EntityWhereCriteria<T> | object;
 }
 
 export type Modifier = '<' | '<=' | '>' | '>=' | '!=' | 'in' | 'nin' | 'contains' | 'startsWith' | 'endsWith';

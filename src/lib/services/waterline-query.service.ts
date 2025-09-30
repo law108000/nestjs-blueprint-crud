@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource, Repository, SelectQueryBuilder, FindOperator, WhereExpressionBuilder } from 'typeorm';
+import { DataSource, type Repository, type SelectQueryBuilder, type FindOperator, type WhereExpressionBuilder } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { Criteria, CountCriteria, EntityWhereCriteria, SortOption } from '../interfaces/crud.interfaces';
-import { BaseEntity } from '../entities/base.entity';
+import type { Criteria, CountCriteria, EntityWhereCriteria} from '../interfaces/crud.interfaces';
+import type { BaseEntity } from '../entities/base.entity';
 
 @Injectable()
 export class WaterlineQueryService<T extends BaseEntity> {
@@ -151,7 +151,7 @@ export class WaterlineQueryService<T extends BaseEntity> {
     if (!criteria) return;
 
     const operatorClause = operator === 'and' ? 'andWhere' : 'orWhere';
-    const metadata = this.repository.metadata;
+    const {metadata} = this.repository;
 
     for (const key in criteria) {
       if (key === 'and' || key === 'or') {
@@ -209,7 +209,7 @@ export class WaterlineQueryService<T extends BaseEntity> {
         if (!relation) {
           throw new Error(`Invalid association "${association}" in "${this.repository.metadata.name}"`);
         }
-        query = query.leftJoinAndSelect(`entity.${relation.propertyName}`, "populate_" + relation.propertyName);
+        query = query.leftJoinAndSelect(`entity.${relation.propertyName}`, `populate_${  relation.propertyName}`);
       });
     }
 
@@ -284,7 +284,7 @@ export class WaterlineQueryService<T extends BaseEntity> {
   async countWithModifiers(criteria: CountCriteria): Promise<number> {
     this.logger.debug(`Counting entities with criteria: ${JSON.stringify(criteria)}`);
     
-    let query = this.repository.createQueryBuilder('entity');
+    const query = this.repository.createQueryBuilder('entity');
     
     if (criteria?.where) {
       this.applyCriteria(query, criteria.where);

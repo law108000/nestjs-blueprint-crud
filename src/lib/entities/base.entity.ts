@@ -1,4 +1,4 @@
-import { PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ValueTransformer, DeleteDateColumn } from 'typeorm';
+import { PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, type ValueTransformer } from 'typeorm';
 import { IsOptional } from 'class-validator';
 
 export class DateTransformer implements ValueTransformer {

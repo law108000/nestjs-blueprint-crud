@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { BaseAssociationService } from '../services/base-association.service';
-import { BaseEntity } from '../entities/base.entity';
+import type { BaseEntity } from '../entities/base.entity';
 import { ValidateIdPipe } from '../pipes/validate-id.pipe';
 import { 
   ListQueryParamsRequestDto, 

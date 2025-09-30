@@ -1,5 +1,5 @@
-import { DynamicModule, Module } from '@nestjs/common';
-import { BaseEntity } from '../entities/base.entity';
+import { Module, type DynamicModule } from '@nestjs/common';
+import type { BaseEntity } from '../entities/base.entity';
 import { BaseService } from '../services/base.service';
 import { getWaterlineQueryServiceInjectToken, WaterlineQueryModule } from './waterline-query.module';
 

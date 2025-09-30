@@ -1,5 +1,5 @@
-import { IsOptional, IsNumber, IsString, IsObject } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { IsOptional, IsNumber, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ListQueryParamsRequestDto {
@@ -98,7 +98,7 @@ export class GetQueryParamsRequestDto {
   populate?: string;
 }
 
-export class CountRequestDto<T = any> {
+export class CountRequestDto {
   @ApiPropertyOptional({
     description: 'Filter criteria as JSON string',
     type: 'string',

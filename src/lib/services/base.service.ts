@@ -1,9 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Repository, FindOptionsWhere, In } from 'typeorm';
+import { In, type Repository, type FindOptionsWhere } from 'typeorm';
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { BaseEntity } from '../entities/base.entity';
+import type { BaseEntity } from '../entities/base.entity';
 import { WaterlineQueryService } from './waterline-query.service';
-import { Criteria } from '../interfaces/crud.interfaces';
+import type { Criteria } from '../interfaces/crud.interfaces';
 
 @Injectable()
 export class BaseService<T extends BaseEntity> {
@@ -17,7 +17,7 @@ export class BaseService<T extends BaseEntity> {
   }
 
   async findOne(id: number, populate?: string, select?: string, omit?: string): Promise<T> {
-    if (id == null) {
+    if (id === null) {
       throw new NotFoundException('ID must be provided');
     }
 
@@ -27,8 +27,8 @@ export class BaseService<T extends BaseEntity> {
         populate 
           ? populate.split(',').map(rel => rel.trim()) 
           : this.repository.metadata.relations.map(rel => rel.propertyName),
-      select: select,
-      omit: omit,
+      select,
+      omit,
       limit: 1,
     });
 
@@ -42,7 +42,7 @@ export class BaseService<T extends BaseEntity> {
   async findOneBy(where: Criteria<T>["where"], populate?: string|string[]): Promise<T|null> {
     if (!populate) {
       populate = [];
-      const relations = this.repository.metadata.relations;
+      const {relations} = this.repository.metadata;
       relations.forEach(relation => {
         (populate as string[]).push(relation.propertyName);
       });
@@ -51,7 +51,7 @@ export class BaseService<T extends BaseEntity> {
     }
 
     const entities = await this.waterlineQueryService.findWithModifiers({
-      where: where,
+      where,
       populate,
       limit: 1,
     });
@@ -75,8 +75,8 @@ export class BaseService<T extends BaseEntity> {
     return this.waterlineQueryService.findWithModifiers({
       where: { id: { in: ids } },
       populate: populate ? populate.split(',').map(rel => rel.trim()) : undefined,
-      select: select,
-      omit: omit,
+      select,
+      omit,
     });
   }
 

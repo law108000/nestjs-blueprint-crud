@@ -1,9 +1,9 @@
 import 'reflect-metadata';
-import { ApiPropertyOptional, ApiPropertyOptions, PickType } from '@nestjs/swagger';
+import { ApiPropertyOptional, PickType, type ApiPropertyOptions } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import { BaseEntity } from '../entities/base.entity';
-import { IQueryCriteria, IListQueryDto, ICountQueryDto } from '../interfaces/crud.interfaces';
+import { IQueryCriteria, type IListQueryDto, type ICountQueryDto } from '../interfaces/crud.interfaces';
 
 const QUERY_PROPERTY_METADATA_KEY = 'QUERY_PROPERTY_METADATA_KEY';
 
@@ -42,7 +42,7 @@ export type ApiWhereCriteriaPropertyOptions = ApiPropertyOptions & {
 };
 
 export function ApiWhereCriteriaOptional(options: ApiWhereCriteriaPropertyOptions = {}): PropertyDecorator {
-  const { anyOf: originalAnyOf, type: originalType, enum: originalEnum, isEntity, ...rest } = options;
+  const { anyOf: originalAnyOf, type: originalType, isEntity } = options;
 
   const type: string = isEntity ? 'number' : originalType as string;
 
@@ -68,7 +68,7 @@ export function ApiWhereCriteriaOptional(options: ApiWhereCriteriaPropertyOption
         },
       ],
     });
-  } else {
+  } 
     return ApiPropertyOptional({
       ...options,
       anyOf: [
@@ -91,7 +91,7 @@ export function ApiWhereCriteriaOptional(options: ApiWhereCriteriaPropertyOption
         },
       ],
     });
-  }
+  
 }
 
 export type KeyOfType<Type, ValueType> = keyof {
@@ -130,10 +130,10 @@ export function generateSwaggerQueryDtoForEntity<T extends BaseEntity>(target: n
 
   for (const propertyKey of metadataKeys) {
     const metadata = getQueryPropertyMetadata(target.prototype, propertyKey) || {};
-    const { type, isISO8601, isTimestamp, isEntity, entityName } = metadata;
+    const { isEntity } = metadata;
     const originalType = Reflect.getMetadata('design:type', target.prototype, propertyKey);
     const originalTypeName = originalType?.name?.toLowerCase();
-    const isTenantBaseEntity = BaseEntity.prototype.isPrototypeOf(originalType?.prototype);
+    const isTenantBaseEntity = originalType?.prototype instanceof BaseEntity;
     const isEnum = !!metadata.enum;
 
     Expose()(QueryCriteria.prototype, propertyKey);

@@ -4,7 +4,6 @@ import {
   ClassSerializerInterceptor, 
   Controller, 
   Delete, 
-  DynamicModule, 
   ForbiddenException, 
   Get, 
   Inject, 
@@ -13,10 +12,11 @@ import {
   Query, 
   UseInterceptors, 
   UsePipes, 
-  ValidationPipe 
+  ValidationPipe,
+  type DynamicModule
 } from '@nestjs/common';
 import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { BaseEntity } from '../entities/base.entity';
+import type { BaseEntity } from '../entities/base.entity';
 import { BaseController } from '../controllers/base.controller';
 import { BaseServiceModule, getBaseServiceInjectToken } from './base-service.module';
 import { BaseService } from '../services/base.service';
@@ -60,7 +60,7 @@ export class BaseControllerModule {
   static forEntity<T extends BaseEntity>(config: BaseControllerConfig<T>): DynamicModule {
     const { entity, prefix, tagName, permissions = {}, dtos = {} } = config;
     const { list = true, count = true, get = true, create = true, update = true, delete: del = true } = permissions;
-    let { get: GetDto = GetQueryParamsRequestDto } = dtos;
+    const { get: GetDto = GetQueryParamsRequestDto } = dtos;
 
     const { CountQueryDto, ListQueryDto } = generateSwaggerQueryDtoForEntity(config.entity);
     const { CreateDto, UpdateDto } = generateSwaggerCreateUpdateDtoForEntity(config.entity);

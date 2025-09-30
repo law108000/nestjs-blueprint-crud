@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { applyDecorators } from '@nestjs/common';
-import { ApiResponseProperty, ApiResponseOptions, PickType } from '@nestjs/swagger';
+import { ApiResponseProperty, PickType, type ApiResponseOptions } from '@nestjs/swagger';
 import { Expose, Transform, Exclude } from 'class-transformer';
-import { BaseEntity } from '../entities/base.entity';
+import type { BaseEntity } from '../entities/base.entity';
 
 const SERIALIZE_PROPERTY_METADATA_KEY = 'SERIALIZE_PROPERTY_METADATA_KEY';
 
@@ -78,13 +78,13 @@ export function TransformToEntity(entityName: string) {
   );
 }
 
-function limitRecursionDepth(value: any, depth: number = 0, maxDepth: number = 1): any {
-  if (depth > maxDepth || value === null || value === undefined || typeof value !== 'object') {
-    return value?.id;
-  }
+// function limitRecursionDepth(value: any, depth: number = 0, maxDepth: number = 1): any {
+//   if (depth > maxDepth || value === null || value === undefined || typeof value !== 'object') {
+//     return value?.id;
+//   }
 
-  return value;
-}
+//   return value;
+// }
 
 export function getSerializePropertyMetadata(target: any, propertyKey: string) {
   const metadataKey = `${propertyKey}@${SERIALIZE_PROPERTY_METADATA_KEY}`;

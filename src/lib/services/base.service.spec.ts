@@ -1,5 +1,4 @@
 import { BaseService } from './base.service';
-import { WaterlineQueryService } from './waterline-query.service';
 
 describe('BaseService', () => {
   let service: BaseService<any>;

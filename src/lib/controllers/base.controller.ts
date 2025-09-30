@@ -6,16 +6,15 @@ import {
   Delete, 
   Param, 
   Body, 
-  Query, 
-  BadRequestException, 
+  Query,
   HttpCode, 
   Logger, 
   ClassSerializerInterceptor, 
   UseInterceptors 
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { BaseService } from '../services/base.service';
-import { BaseEntity } from '../entities/base.entity';
+import type { BaseEntity } from '../entities/base.entity';
 import { ValidateIdPipe } from '../pipes/validate-id.pipe';
 import { 
   ListQueryParamsRequestDto, 

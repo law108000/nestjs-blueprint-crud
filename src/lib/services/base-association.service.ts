@@ -1,9 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { EntityNotFoundError, In, Repository } from 'typeorm';
-import { BaseEntity } from '../entities/base.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import type { Repository } from 'typeorm';
+import type { BaseEntity } from '../entities/base.entity';
 import { WaterlineQueryService } from './waterline-query.service';
 import { BaseService } from './base.service';
-import { Criteria, CountCriteria } from '../interfaces/crud.interfaces';
+import type { Criteria, CountCriteria } from '../interfaces/crud.interfaces';
 
 @Injectable()
 export class BaseAssociationService<Parent extends BaseEntity, Child extends BaseEntity> extends BaseService<Parent> {
