@@ -29,7 +29,7 @@ export {
   SortOption,
   IQueryCriteria,
   IListQueryDto,
-  ICountQueryDto
+  ICountQueryDto,
 } from './lib/interfaces/crud.interfaces';
 
 // Note: ICreateDto and IUpdateDto are exported from decorators to avoid conflicts
@@ -40,8 +40,4 @@ export * from './lib/modules/base-service.module';
 export * from './lib/modules/base-controller.module';
 
 // Utilities and types
-export {
-  DateTransformer,
-  BooleanTransformer,
-  IntTransformer
-} from './lib/entities/base.entity';
+export { DateTransformer, BooleanTransformer, IntTransformer } from './lib/entities/base.entity';

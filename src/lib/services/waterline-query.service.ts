@@ -1,8 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource, Repository, SelectQueryBuilder, FindOperator, WhereExpressionBuilder } from 'typeorm';
+import {
+  DataSource,
+  type Repository,
+  type SelectQueryBuilder,
+  type FindOperator,
+  type WhereExpressionBuilder,
+} from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { Criteria, CountCriteria, EntityWhereCriteria, SortOption } from '../interfaces/crud.interfaces';
-import { BaseEntity } from '../entities/base.entity';
+import type { Criteria, CountCriteria, EntityWhereCriteria } from '../interfaces/crud.interfaces';
+import type { BaseEntity } from '../entities/base.entity';
 
 @Injectable()
 export class WaterlineQueryService<T extends BaseEntity> {
@@ -13,7 +19,7 @@ export class WaterlineQueryService<T extends BaseEntity> {
 
   constructor(
     private readonly dataSource: DataSource,
-    private entityClass: new () => T
+    private entityClass: new () => T,
   ) {
     this.repository = this.dataSource.getRepository(this.entityClass);
   }
@@ -23,9 +29,14 @@ export class WaterlineQueryService<T extends BaseEntity> {
   }
 
   private isFindOperator(value: any): value is FindOperator<any> {
-    return value && typeof value === 'object' && 
-      (value['@instanceof'] === Symbol.for('FindOperator') || 
-      (value._type !== undefined && value._value !== undefined && value._useParameter !== undefined));
+    return (
+      value &&
+      typeof value === 'object' &&
+      (value['@instanceof'] === Symbol.for('FindOperator') ||
+        (value._type !== undefined &&
+          value._value !== undefined &&
+          value._useParameter !== undefined))
+    );
   }
 
   private applyFindOperator(
@@ -33,7 +44,7 @@ export class WaterlineQueryService<T extends BaseEntity> {
     operatorClause: 'andWhere' | 'orWhere',
     alias: string,
     key: string,
-    findOperator: any
+    findOperator: any,
   ): void {
     const paramKey = uuidv4().replace(/-/g, '_');
     const type = findOperator._type;
@@ -68,7 +79,9 @@ export class WaterlineQueryService<T extends BaseEntity> {
         query[operatorClause](`${alias}.${key} LIKE :${paramKey}`, { [paramKey]: value });
         break;
       case 'ilike':
-        query[operatorClause](`LOWER(${alias}.${key}) LIKE LOWER(:${paramKey})`, { [paramKey]: value });
+        query[operatorClause](`LOWER(${alias}.${key}) LIKE LOWER(:${paramKey})`, {
+          [paramKey]: value,
+        });
         break;
       case 'isNull':
         query[operatorClause](`${alias}.${key} IS NULL`);
@@ -87,7 +100,7 @@ export class WaterlineQueryService<T extends BaseEntity> {
     alias: string,
     key: string,
     modifier: string,
-    modifierValue: any
+    modifierValue: any,
   ): void {
     const paramKey = uuidv4().replace(/-/g, '_');
     const paramObj: { [key: string]: any } = {};
@@ -146,18 +159,18 @@ export class WaterlineQueryService<T extends BaseEntity> {
     query: WhereExpressionBuilder,
     criteria: EntityWhereCriteria<T> | null = {},
     alias: string = 'entity',
-    operator: 'and' | 'or' = 'and'
+    operator: 'and' | 'or' = 'and',
   ): void {
     if (!criteria) return;
 
     const operatorClause = operator === 'and' ? 'andWhere' : 'orWhere';
-    const metadata = this.repository.metadata;
+    const { metadata } = this.repository;
 
     for (const key in criteria) {
       if (key === 'and' || key === 'or') {
         const subCriteria = criteria[key] as EntityWhereCriteria<T>[];
         if (Array.isArray(subCriteria)) {
-          subCriteria.forEach((subCriterion) => {
+          subCriteria.forEach(subCriterion => {
             this.applyCriteria(query, subCriterion, alias, key);
           });
         }
@@ -190,26 +203,33 @@ export class WaterlineQueryService<T extends BaseEntity> {
     return this.lastExecutedQuery;
   }
 
-  async findWithModifiers(criteria: Criteria, customQuery: SelectQueryBuilder<T> | null = null): Promise<T[]> {
+  async findWithModifiers(
+    criteria: Criteria,
+    customQuery: SelectQueryBuilder<T> | null = null,
+  ): Promise<T[]> {
     let query = customQuery || this.repository.createQueryBuilder('entity');
     let populateOptions: string[] = [];
-    
+
     this.logger.debug(`Finding entities with criteria: ${JSON.stringify(criteria)}`);
-    
+
     if (criteria?.populate) {
       this.logger.debug('populate criteria', criteria.populate);
-      populateOptions = (typeof criteria.populate === 'string'
-        ? criteria.populate.split(',')
-        : criteria.populate
+      populateOptions = (
+        typeof criteria.populate === 'string' ? criteria.populate.split(',') : criteria.populate
       ).map(field => field.trim());
       this.logger.debug('populate options', populateOptions);
 
       populateOptions.forEach((association: string) => {
         const relation = this.repository.metadata.findRelationWithPropertyPath(association);
         if (!relation) {
-          throw new Error(`Invalid association "${association}" in "${this.repository.metadata.name}"`);
+          throw new Error(
+            `Invalid association "${association}" in "${this.repository.metadata.name}"`,
+          );
         }
-        query = query.leftJoinAndSelect(`entity.${relation.propertyName}`, "populate_" + relation.propertyName);
+        query = query.leftJoinAndSelect(
+          `entity.${relation.propertyName}`,
+          `populate_${relation.propertyName}`,
+        );
       });
     }
 
@@ -277,19 +297,19 @@ export class WaterlineQueryService<T extends BaseEntity> {
     for (let i = 0; i < entities.length; i++) {
       this.enhanceEntityWithForeignKeys(entities[i], raw[i], populateOptions);
     }
-    
+
     return entities;
   }
 
   async countWithModifiers(criteria: CountCriteria): Promise<number> {
     this.logger.debug(`Counting entities with criteria: ${JSON.stringify(criteria)}`);
-    
-    let query = this.repository.createQueryBuilder('entity');
-    
+
+    const query = this.repository.createQueryBuilder('entity');
+
     if (criteria?.where) {
       this.applyCriteria(query, criteria.where);
     }
-    
+
     this.lastExecutedQuery = query;
     return await query.getCount();
   }

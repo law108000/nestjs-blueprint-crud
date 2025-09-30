@@ -1,9 +1,11 @@
-import { DynamicModule, Module } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { BaseEntity } from '../entities/base.entity';
+import { Module, type DynamicModule } from '@nestjs/common';
+import type { DataSource } from 'typeorm';
+import type { BaseEntity } from '../entities/base.entity';
 import { WaterlineQueryService } from '../services/waterline-query.service';
 
-export function getWaterlineQueryServiceInjectToken<T extends BaseEntity>(entity: new () => T): string {
+export function getWaterlineQueryServiceInjectToken<T extends BaseEntity>(
+  entity: new () => T,
+): string {
   return `${entity.name}WaterlineQueryService`;
 }
 
