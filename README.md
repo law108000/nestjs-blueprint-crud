@@ -4,16 +4,35 @@ A comprehensive NestJS library for automatic CRUD operations with TypeORM, compl
 
 ## Inspiration
 
-This library is inspired by [SailsJS](https://sailsjs.com/) and its ecosystem, particularly:
+This library draws inspiration from [SailsJS](https://sailsjs.com/) and its blueprint API, bringing the concept of automatic CRUD generation to the modern NestJS ecosystem with full TypeScript support and contemporary development practices.
 
-- **[Waterline ORM](https://waterlinejs.org/)** - For the elegant and intuitive query syntax that made complex database operations simple and readable
-- **[SailsJS Blueprint API](https://sailsjs.com/documentation/reference/blueprint-api)** - For the automatic REST API generation that eliminated boilerplate controller code
+## Enhancements over Sails.js Blueprints
 
-SailsJS was groundbreaking in its approach to rapid API development, providing automatic CRUD endpoints and a powerful query language out of the box. However, it lacks TypeScript support and has not been actively maintained in recent years.
+This NestJS implementation goes beyond the original Sails.js blueprint concept by providing significant improvements:
 
-This package brings the best concepts from Waterline's query syntax and SailsJS's blueprint controllers to the modern NestJS ecosystem, with full TypeScript support, decorators, and integration with TypeORM.
+🛡️ **Full TypeScript Support**: Complete type safety with TypeScript interfaces, generics, and compile-time checks - no more runtime JavaScript errors.
 
-## Features
+🎯 **NestJS Ecosystem Integration**: Seamlessly integrates with NestJS modules, dependency injection, guards, interceptors, pipes, and middleware for enterprise-grade applications.
+
+⚡ **TypeORM Integration**: Uses the modern, high-performance TypeORM instead of Waterline, providing better query optimization, migration support, and database compatibility.
+
+🎨 **Decorator-Driven Architecture**: Fine-grained control over API behavior using property decorators (`@CreateProperty`, `@UpdateProperty`, `@QueryProperty`, `@SerializeProperty`) for each field.
+
+📚 **Automatic Swagger Documentation**: Built-in OpenAPI/Swagger documentation generation with proper request/response models, validation schemas, and interactive API testing.
+
+🔐 **Advanced Permission Control**: Granular permission settings per CRUD operation, enabling sophisticated access control patterns.
+
+🔄 **Soft Deletes & Bulk Operations**: Support for soft deletes, bulk create/update/delete operations, and record restoration - features not available in basic Sails blueprints.
+
+🧪 **Comprehensive Testing**: Includes unit tests, integration tests, and end-to-end test suites with Jest, ensuring reliability and compatibility.
+
+🔧 **Modern Async/Await**: Leverages contemporary JavaScript async patterns without callback hell.
+
+📊 **Enhanced Query Capabilities**: Advanced filtering, sorting, pagination, and association loading with TypeORM's powerful query builder.
+
+🛠️ **Extensibility**: Easy to extend and customize with dependency injection, allowing composition of custom business logic on top of generated services.
+
+🎪 **Validation & Serialization**: Integrated request/response validation and transformation using class-validator and class-transformer.
 
 🚀 **Automatic CRUD**: Auto-generate complete REST API endpoints  
 🔍 **Complex Queries**: Support advanced query syntax with operators, sorting, and pagination  
@@ -165,19 +184,28 @@ export class AppModule {}
 
 The package automatically generates the following endpoints for your entities:
 
-### Basic CRUD Operations
+### Core CRUD Operations (Sails.js Blueprint Compatible)
+
+These endpoints maintain full compatibility with Sails.js blueprint API:
 
 ```
-GET    /users             # Query user list
-GET    /users/count       # Count matching users
-GET    /users/:id         # Retrieve a single user
-POST   /users             # Create a user
-PATCH  /users/:id         # Update a user
-DELETE /users/:id         # Soft delete a user (if soft-delete is enabled)
-POST   /users/bulk        # Bulk create (array body)
-PATCH  /users/bulk?ids=1,2,3   # Bulk update by ID list
-DELETE /users/bulk?ids=1,2,3   # Bulk delete by ID list
-POST   /users/:id/restore # Restore a soft-deleted record
+GET    /users             # Query user list (find)
+GET    /users/:id         # Retrieve a single user (findOne)
+POST   /users             # Create a user (create)
+PATCH  /users/:id         # Update a user (update)
+DELETE /users/:id         # Soft delete a user (destroy)
+```
+
+### Enhanced CRUD Operations (Extended Features)
+
+Additional endpoints that extend beyond basic Sails.js blueprints:
+
+```
+GET    /users/count       # Count matching users (enhanced)
+POST   /users/bulk        # Bulk create multiple users (extended)
+PATCH  /users/bulk?ids=1,2,3   # Bulk update by ID list (extended)
+DELETE /users/bulk?ids=1,2,3   # Bulk delete by ID list (extended)
+POST   /users/:id/restore # Restore a soft-deleted record (extended)
 ```
 
 ### Query Parameters
@@ -221,7 +249,7 @@ Supports rich operators and logical groupings:
     { "email": { "contains": "john" } }
   ]
 }
-```
+
   "and": [
     { "age": { ">": 18 } },
     { "status": "active" }
@@ -309,27 +337,41 @@ class UserOrdersController extends BaseAssociationController<User, Order> {
 export class UserOrderModule {}
 ```
 
-### Auto-Generated Association Endpoints
+### Core Association Endpoints (Sails.js Blueprint Compatible)
+
+Standard association operations that mirror Sails.js blueprint behavior:
 
 ```
-GET    /users/:id/orders        # Query user's orders
-GET    /users/:id/orders/count  # Count user's orders
-PUT    /users/:id/orders/:fk    # Add order association
-PUT    /users/:id/orders        # Replace all order associations
-DELETE /users/:id/orders/:fk    # Remove order association
+GET    /users/:id/orders        # Query user's orders (populate)
+PUT    /users/:id/orders/:fk    # Add order association (add)
+PUT    /users/:id/orders        # Replace all order associations (replace)
+DELETE /users/:id/orders/:fk    # Remove order association (remove)
 ```
 
-## Sails blueprint compatibility
+### Enhanced Association Endpoints (Extended Features)
 
-This library mirrors the [Sails blueprint API](https://sailsjs.com/documentation/reference/blueprint-api) so you can migrate Waterline-style apps with minimal refactoring:
+Additional association operations with improved functionality:
 
-- **RESTful routes**: `find`, `findOne`, `create`, `update` (`PATCH`), and `destroy` (`DELETE`) are exposed at the conventional `/:modelIdentity` and `/:modelIdentity/:id` paths.
-- **Association routes**: `populate`, `add`, `remove`, and `replace` follow the Sails signatures (`GET /:model/:id/:association`, `PUT /:model/:id/:association/:fk`, `DELETE /:model/:id/:association/:fk`, `PUT /:model/:id/:association`).
-- **Raw array payloads**: The `replace` route accepts either `{ "ids": [...] }` _or_ a bare JSON array like `[1,2,3]`, matching the Sails shortcut syntax.
-- **Non-destructive removals**: Removing a child from a collection unlinks the relation (it does not delete the record), mirroring `removeFromCollection` semantics.
-- **Waterline-style queries**: All endpoints understand the `where`, `limit`, `skip`, `sort`, `populate`, `select`, and `omit` options familiar to Waterline.
+```
+GET    /users/:id/orders/count  # Count user's orders (enhanced)
+```
 
-These guarantees are covered by the example end-to-end suite so regressions against Sails behaviour are caught automatically.
+## Sails.js Blueprint Compatibility
+
+While this library maintains API compatibility with Sails.js blueprints for easy migration, it significantly enhances the original concept:
+
+**Migration-Friendly Design**: Existing Sails.js applications can migrate with minimal refactoring, as the core API patterns and query syntax are preserved.
+
+**Enhanced RESTful Routes**: All standard blueprint routes are supported with additional modern endpoints:
+- Standard CRUD: `GET /users`, `POST /users`, `PATCH /users/:id`, `DELETE /users/:id`
+- Advanced operations: `GET /users/count`, bulk operations, soft delete restoration
+- Association management: Full support for relationship operations with improved type safety
+
+**Waterline-Style Queries**: Maintains the familiar query syntax (`where`, `limit`, `skip`, `sort`, `populate`, `select`, `omit`) while adding TypeScript type checking and validation.
+
+**Association Routes**: Complete support for relationship operations (`GET /users/:id/orders`, `PUT /users/:id/orders/:fk`, etc.) with enhanced error handling and validation.
+
+**Backward Compatibility**: The library includes comprehensive end-to-end tests ensuring regressions against Sails.js behavior are caught automatically, while adding modern features that don't break existing functionality.
 
 ## Custom Services
 
