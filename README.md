@@ -41,7 +41,11 @@ npm install @nestjs/common @nestjs/core @nestjs/swagger typeorm class-transforme
 
 ## Quick Start
 
-### 1. Define Entity
+### 1. Install the library
+
+Follow the steps in [Installation](#installation) to add the package and required peer dependencies.
+
+### 2. Define an entity
 
 ```typescript
 import { Entity, Column } from 'typeorm';
@@ -78,15 +82,54 @@ export class User extends BaseEntity {
 }
 ```
 
-### 2. Create Controller Module
+### 3. Provide a database connection
+
+`BaseControllerModule` and `WaterlineQueryModule` resolve their repositories through a shared `DATABASE_CONNECTION` token. Expose it once at the application boundary and reuse it everywhere:
+
+```typescript
+import { Global, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { User } from './user.entity';
+
+@Global()
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: process.env.DB_HOST ?? 'localhost',
+      port: Number(process.env.DB_PORT ?? 3306),
+      username: process.env.DB_USERNAME ?? 'root',
+      password: process.env.DB_PASSWORD ?? 'password',
+      database: process.env.DB_NAME ?? 'test',
+      entities: [User],
+      synchronize: true, // Development only
+    }),
+  ],
+  providers: [
+    {
+      provide: 'DATABASE_CONNECTION',
+      useExisting: DataSource,
+    },
+  ],
+  exports: ['DATABASE_CONNECTION', TypeOrmModule],
+})
+export class DatabaseModule {}
+```
+
+### 4. Register a controller module for the entity
 
 ```typescript
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { BaseControllerModule } from 'nestjs-blueprint-crud';
+import { DatabaseModule } from '../database.module';
 import { User } from './user.entity';
 
 @Module({
   imports: [
+    DatabaseModule,
+    TypeOrmModule.forFeature([User]),
     BaseControllerModule.forEntity({
       entity: User,
       prefix: 'users',
@@ -97,44 +140,23 @@ import { User } from './user.entity';
         get: true,
         create: true,
         update: true,
-        delete: true
-      }
-    })
-  ]
+        delete: true,
+      },
+    }),
+  ],
 })
 export class UserModule {}
 ```
 
-### 3. Setup Database Connection
-
-Provide database connection in your main module:
+### 5. Wire everything together
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { DatabaseModule } from './database.module';
 import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: 'password',
-      database: 'test',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true,
-    }),
-    UserModule
-  ],
-  providers: [
-    {
-      provide: 'DATABASE_CONNECTION',
-      useFactory: (dataSource) => dataSource,
-      inject: ['DataSource']
-    }
-  ]
+  imports: [DatabaseModule, UserModule],
 })
 export class AppModule {}
 ```
@@ -146,49 +168,60 @@ The package automatically generates the following endpoints for your entities:
 ### Basic CRUD Operations
 
 ```
-GET    /users           # Query user list
-GET    /users/count     # User count statistics
-GET    /users/:id       # Query single user
-POST   /users           # Create user
-PATCH  /users/:id       # Update user
-DELETE /users/:id       # Delete user
-POST   /users/bulk      # Bulk create
-PATCH  /users/bulk      # Bulk update
-DELETE /users/bulk      # Bulk delete
-POST   /users/:id/restore # Restore soft-deleted
+GET    /users             # Query user list
+GET    /users/count       # Count matching users
+GET    /users/:id         # Retrieve a single user
+POST   /users             # Create a user
+PATCH  /users/:id         # Update a user
+DELETE /users/:id         # Soft delete a user (if soft-delete is enabled)
+POST   /users/bulk        # Bulk create (array body)
+PATCH  /users/bulk?ids=1,2,3   # Bulk update by ID list
+DELETE /users/bulk?ids=1,2,3   # Bulk delete by ID list
+POST   /users/:id/restore # Restore a soft-deleted record
 ```
 
 ### Query Parameters
 
-```typescript
-// GET /users?where={"name":"John"}&limit=10&skip=0&sort=name ASC
-{
-  "where": "{\\"name\\":\\"John\\",\\"age\\":{\\">=\\":18}}",
-  "limit": 10,
-  "skip": 0,
-  "sort": "name ASC",
-  "select": "id,name,email",
-  "omit": "password",
-  "populate": "profile,orders"
-}
+All list endpoints accept Waterline-style criteria encoded as query params. Example:
+
 ```
+GET /users?where=%7B%22name%22%3A%22John%22%2C%22age%22%3A%7B%22%3E%3D%22%3A18%7D%7D&limit=10&skip=0&sort=name%20ASC&select=id,name,email&omit=password&populate=profile,orders
+```
+
+`ListQueryParamsRequestDto` understands the following keys:
+- `where` — JSON string representing Waterline-style criteria
+- `limit`, `skip` — pagination controls
+- `sort` — e.g. `createdAt DESC`
+- `select`, `omit` — comma-separated projection controls
+- `populate` — comma-separated relations to eager load
 
 ## Advanced Query Syntax
 
-Supports rich query operators:
+Supports rich operators and logical groupings:
 
-```javascript
-// Comparison operators
-{ "age": { ">": 18 } }          // Age greater than 18
-{ "age": { ">=": 18, "<=": 65 } } // Age between 18-65
+```json
+{ "age": { ">": 18 } }
+{ "age": { ">=": 18, "<=": 65 } }
+{ "id": { "in": [1, 2, 3] } }
+{ "name": { "contains": "John" } }
+{ "email": { "startsWith": "admin" } }
+```
 
-// Contains operators
-{ "id": { "in": [1, 2, 3] } }   // ID in specified list
-{ "name": { "contains": "John" } } // Name contains "John"
-{ "email": { "startsWith": "admin" } } // Email starts with "admin"
-
-// Logical operators
+```json
 {
+  "and": [
+    { "age": { ">": 18 } },
+    { "status": "active" }
+  ]
+}
+
+{
+  "or": [
+    { "name": { "contains": "John" } },
+    { "email": { "contains": "john" } }
+  ]
+}
+```
   "and": [
     { "age": { ">": 18 } },
     { "status": "active" }
@@ -229,17 +262,49 @@ export class Order extends BaseEntity {
 ### Association Controller
 
 ```typescript
+import { Controller, Module } from '@nestjs/common';
+import {
+  BaseAssociationController,
+  BaseAssociationService,
+  WaterlineQueryModule,
+  WaterlineQueryService,
+  getWaterlineQueryServiceInjectToken,
+} from 'nestjs-blueprint-crud';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './user.entity';
+import { Order } from './order.entity';
+
+@Controller('users')
+class UserOrdersController extends BaseAssociationController<User, Order> {
+  constructor(baseAssociationService: BaseAssociationService<User, Order>) {
+    super(baseAssociationService, 'orders');
+  }
+}
+
 @Module({
   imports: [
-    BaseAssociationControllerModule.forEntity({
-      parentEntity: User,
-      childEntity: Order,
-      association: 'orders',
-      prefix: 'users',
-      suffix: 'orders',
-      tagName: 'User Orders',
-    })
-  ]
+    TypeOrmModule.forFeature([User, Order]),
+    WaterlineQueryModule.forEntity(User),
+    WaterlineQueryModule.forEntity(Order),
+  ],
+  controllers: [UserOrdersController],
+  providers: [
+    {
+      provide: BaseAssociationService,
+      useFactory: (
+        userQuery: WaterlineQueryService<User>,
+        orderQuery: WaterlineQueryService<Order>,
+      ) => new BaseAssociationService(userQuery, orderQuery),
+      inject: [
+        getWaterlineQueryServiceInjectToken(User),
+        getWaterlineQueryServiceInjectToken(Order),
+      ],
+    },
+    {
+      provide: 'ASSOCIATION_NAME',
+      useValue: 'orders',
+    },
+  ],
 })
 export class UserOrderModule {}
 ```
@@ -268,23 +333,28 @@ These guarantees are covered by the example end-to-end suite so regressions agai
 
 ## Custom Services
 
-If you need custom business logic, you can extend the base service:
+If you need custom business logic, inject the generated base service and compose new methods on top:
 
 ```typescript
-import { Injectable } from '@nestjs/common';
-import { BaseService } from 'nestjs-blueprint-crud';
+import { Inject, Injectable } from '@nestjs/common';
+import { BaseService, getBaseServiceInjectToken } from 'nestjs-blueprint-crud';
 import { User } from './user.entity';
 
 @Injectable()
-export class UserService extends BaseService<User> {
+export class UserService {
+  constructor(
+    @Inject(getBaseServiceInjectToken(User))
+    private readonly baseService: BaseService<User>,
+  ) {}
+
   async findActiveUsers(): Promise<User[]> {
-    return this.find({
-      where: { status: 'active' }
+    return this.baseService.find({
+      where: { status: 'active' },
     });
   }
 
   async promoteToAdmin(userId: number): Promise<User> {
-    return this.update(userId, { role: 'admin' });
+    return this.baseService.update(userId, { role: 'admin' });
   }
 }
 ```

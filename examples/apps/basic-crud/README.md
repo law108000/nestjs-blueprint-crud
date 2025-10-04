@@ -30,7 +30,9 @@ npm run db:start
 DB_HOST=127.0.0.1 DB_PORT=3307 DB_USERNAME=root DB_PASSWORD=password DB_NAME=nestjs_crud_example npx ts-node -r tsconfig-paths/register examples/apps/basic-crud/src/main.ts
 ```
 
-4. Explore the generated Swagger docs at `http://localhost:3000/api`.
+4. Send requests to `http://localhost:3000` (for example, `GET /users`) to verify the generated controllers. The boot process logs the exact URL once the app is ready.
+
+> Want Swagger UI? Add Nest’s `SwaggerModule` setup to `src/main.ts`—the controllers already emit OpenAPI metadata.
 
 5. Shut the database down when you are finished:
 
@@ -52,7 +54,7 @@ npm run db:stop
   npm run test:e2e -- --testPathPattern=examples/apps/basic-crud/test
   ```
 
-  This suite is safe to extend with additional flows without impacting other showcases.
+  This suite is safe to extend with additional flows without impacting other showcases, and it spins the Dockerized MySQL instance up/down automatically.
 
   The existing specs verify Waterline-style queries, `add/remove/replace` association flows, and the raw-array payloads required for Sails blueprint parity.
 

@@ -6,4 +6,4 @@ Centralized utilities, entities, providers, and configuration snippets that can 
 - Share data factories and seeding helpers in `seeders/`
 - Store dotenv templates, configuration files, and scripts in `config/`
 
-Each example app can import from `@examples/shared/*` (see `examples/tsconfig.json` path aliases) to avoid copy-pasting boilerplate.
+Each example app can import from `@examples/shared/*` (look at `examples/apps/basic-crud/tsconfig.json` for the path alias wiring) to avoid copy-pasting boilerplate.

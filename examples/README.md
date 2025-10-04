@@ -35,7 +35,7 @@ examples/
 ## Managing multiple scenarios
 
 1. **Create a new app:** copy `apps/basic-crud` into `apps/<scenario-name>` and tailor the modules/entities. Keep each app self-contained within its `src` directory.
-2. **Share code intentionally:** place reusable assets in `shared/` and import them via the `@examples/shared/*` path alias to avoid duplication.
+2. **Share code intentionally:** place reusable assets in `shared/` and import them via the `@examples/shared/*` path alias defined by each scenario’s `tsconfig.json` (see `apps/basic-crud/tsconfig.json`).
 3. **Capture reproductions:** open a dated folder under `repros/` (for example, `repros/2025-10-03-user-sort/`) with a short README that outlines steps to reproduce, expected vs actual behaviour, and clean-up notes. Remove or archive folders once the fix lands.
 4. **Centralize configuration:** extend `tooling/tsconfig.base.json` and `tooling/jest.base.config.js` from each example so TypeScript and Jest stay in sync across scenarios.
 
@@ -60,7 +60,7 @@ npx ts-node -r tsconfig-paths/register examples/apps/basic-crud/src/main.ts
 npm run db:stop
 ```
 
-Swagger for each example is available at `http://localhost:3000/api` by default.
+> Want Swagger UI? Add the standard NestJS Swagger bootstrap to the example’s `main.ts` (for instance, call `SwaggerModule.setup('api', app, document)` after creating the app). The controllers already publish the required OpenAPI metadata.
 
 ## Testing
 
@@ -77,7 +77,7 @@ Swagger for each example is available at `http://localhost:3000/api` by default.
   ```
 
   Use the scenario directory in the `--testPathPattern` flag to target other showcases.
-  The Basic CRUD specs lock in Sails blueprint compatibility (collection routes, raw-array `replace`, non-destructive `remove`), so regressions are caught automatically.
+  The Basic CRUD specs lock in Sails blueprint compatibility (collection routes, raw-array `replace`, non-destructive `remove`), so regressions are caught automatically, and the script will start/stop the MySQL container for you.
 
 ## Legacy import paths
 
