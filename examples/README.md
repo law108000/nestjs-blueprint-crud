@@ -77,6 +77,7 @@ Swagger for each example is available at `http://localhost:3000/api` by default.
   ```
 
   Use the scenario directory in the `--testPathPattern` flag to target other showcases.
+  The Basic CRUD specs lock in Sails blueprint compatibility (collection routes, raw-array `replace`, non-destructive `remove`), so regressions are caught automatically.
 
 ## Legacy import paths
 

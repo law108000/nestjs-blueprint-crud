@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
+import type { RelationMetadata } from 'typeorm/metadata/RelationMetadata';
 import type { BaseEntity } from '../entities/base.entity';
 import { WaterlineQueryService } from './waterline-query.service';
 import { BaseService } from './base.service';
-import type { Criteria, CountCriteria } from '../interfaces/crud.interfaces';
+import type { Criteria, CountCriteria, EntityWhereCriteria } from '../interfaces/crud.interfaces';
 
 @Injectable()
 export class BaseAssociationService<
@@ -12,7 +12,6 @@ export class BaseAssociationService<
   Child extends BaseEntity,
 > extends BaseService<Parent> {
   private parentRepository: Repository<Parent>;
-  private childRepository: Repository<Child>;
 
   constructor(
     parentWaterlineQueryService: WaterlineQueryService<Parent>,
@@ -20,44 +19,22 @@ export class BaseAssociationService<
   ) {
     super(parentWaterlineQueryService);
     this.parentRepository = parentWaterlineQueryService.getRepository();
-    this.childRepository = childWaterlineQueryService.getRepository();
   }
 
   async addAssociation(id: number, association: string, fk: number): Promise<Parent> {
-    const parentRecord = await this.findOne(id);
-    if (!parentRecord) {
-      throw new NotFoundException(`Parent record with id ${id} not found`);
-    }
+    await this.ensureParentExists(id);
 
-    const childRecord = await this.childWaterlineQueryService.findWithModifiers({
-      where: { id: fk },
-      limit: 1,
-    });
+    const relation = this.getRelationMetadata(association);
 
-    if (!childRecord || childRecord.length === 0) {
-      throw new NotFoundException(`Child record with id ${fk} not found`);
-    }
-
-    const relation = this.parentRepository.metadata.findRelationWithPropertyPath(association);
-    if (!relation) {
-      throw new Error(
-        `Association '${association}' not found in ${this.parentRepository.metadata.name}`,
-      );
-    }
+    await this.ensureChildExists(fk);
 
     try {
-      if (relation.isManyToMany || relation.isOneToMany) {
-        const currentAssociations = (parentRecord as any)[association] || [];
-        const existingAssociation = currentAssociations.find((item: any) => item.id === fk);
+      const relationBuilder = this.getParentRelationBuilder(relation);
 
-        if (!existingAssociation) {
-          currentAssociations.push(childRecord[0]);
-          (parentRecord as any)[association] = currentAssociations;
-          await this.parentRepository.save(parentRecord);
-        }
-      } else if (relation.isManyToOne || relation.isOneToOne) {
-        (parentRecord as any)[association] = childRecord[0];
-        await this.parentRepository.save(parentRecord);
+      if (relation.isManyToMany || relation.isOneToMany) {
+        await relationBuilder.of(id).add(fk);
+      } else {
+        await relationBuilder.of(id).set(fk);
       }
 
       return this.findOne(id, relation.propertyName);
@@ -68,33 +45,17 @@ export class BaseAssociationService<
   }
 
   async removeAssociation(id: number, association: string, fk: number): Promise<Parent> {
-    const parentRecord = await this.findOne(id);
-    if (!parentRecord) {
-      throw new NotFoundException(`Parent record with id ${id} not found`);
-    }
+    await this.ensureParentExists(id);
 
-    const relation = this.parentRepository.metadata.findRelationWithPropertyPath(association);
-    if (!relation) {
-      throw new Error(
-        `Association '${association}' not found in ${this.parentRepository.metadata.name}`,
-      );
-    }
+    const relation = this.getRelationMetadata(association);
 
     try {
-      if (relation.isManyToMany) {
-        const currentAssociations = (parentRecord as any)[association] || [];
-        const filteredAssociations = currentAssociations.filter((item: any) => item.id !== fk);
-        (parentRecord as any)[association] = filteredAssociations;
-        await this.parentRepository.save(parentRecord);
-      } else if (relation.isOneToMany) {
-        await this.childRepository.softDelete(fk);
-        const currentAssociations = (parentRecord as any)[association] || [];
-        const filteredAssociations = currentAssociations.filter((item: any) => item.id !== fk);
-        (parentRecord as any)[association] = filteredAssociations;
-        await this.parentRepository.save(parentRecord);
-      } else if (relation.isManyToOne || relation.isOneToOne) {
-        (parentRecord as any)[association] = null;
-        await this.parentRepository.save(parentRecord);
+      const relationBuilder = this.getParentRelationBuilder(relation);
+
+      if (relation.isManyToMany || relation.isOneToMany) {
+        await relationBuilder.of(id).remove(fk);
+      } else {
+        await relationBuilder.of(id).set(null);
       }
 
       return this.findOne(id, relation.propertyName);
@@ -105,39 +66,47 @@ export class BaseAssociationService<
   }
 
   async replaceAssociations(id: number, association: string, fks: number[]): Promise<Parent> {
-    const parentRecord = await this.findOne(id);
-    if (!parentRecord) {
-      throw new NotFoundException(`Parent record with id ${id} not found`);
-    }
+    await this.ensureParentExists(id);
 
-    const relation = this.parentRepository.metadata.findRelationWithPropertyPath(association);
-    if (!relation) {
-      throw new Error(
-        `Association '${association}' not found in ${this.parentRepository.metadata.name}`,
-      );
+    const relation = this.getRelationMetadata(association);
+
+    const normalizedIds = Array.from(
+      new Set(fks.map(fk => Number(fk)).filter(fk => !Number.isNaN(fk))),
+    );
+
+    if (normalizedIds.length > 0) {
+      const childRecords = await this.childWaterlineQueryService.findWithModifiers({
+        where: { id: { in: normalizedIds } },
+      });
+
+      if (childRecords.length !== normalizedIds.length) {
+        throw new NotFoundException('Some child records not found');
+      }
     }
 
     try {
-      if (fks.length > 0) {
-        const childRecords = await this.childWaterlineQueryService.findWithModifiers({
-          where: { id: { in: fks } },
-        });
+      const relationBuilder = this.getParentRelationBuilder(relation);
 
-        if (childRecords.length !== fks.length) {
-          throw new NotFoundException('Some child records not found');
+      if (relation.isManyToMany) {
+        await relationBuilder.of(id).set(normalizedIds);
+      } else if (relation.isOneToMany) {
+        const existingChildren = (await relationBuilder.of(id).loadMany()) as Child[];
+        const existingIds = existingChildren.map(child => child.id);
+
+        const idsToRemove = existingIds.filter(existingId => !normalizedIds.includes(existingId));
+        if (idsToRemove.length > 0) {
+          await relationBuilder.of(id).remove(idsToRemove);
         }
 
-        if (relation.isManyToMany || relation.isOneToMany) {
-          (parentRecord as any)[association] = childRecords;
-        } else if (relation.isManyToOne || relation.isOneToOne) {
-          (parentRecord as any)[association] = childRecords[0];
+        const idsToAdd = normalizedIds.filter(childId => !existingIds.includes(childId));
+        if (idsToAdd.length > 0) {
+          await relationBuilder.of(id).add(idsToAdd);
         }
       } else {
-        (parentRecord as any)[association] =
-          relation.isManyToMany || relation.isOneToMany ? [] : null;
+        const value = normalizedIds[0] ?? null;
+        await relationBuilder.of(id).set(value);
       }
 
-      await this.parentRepository.save(parentRecord);
       return this.findOne(id, relation.propertyName);
     } catch (error) {
       this.logger.error('Error replacing associations:', error);
@@ -146,77 +115,84 @@ export class BaseAssociationService<
   }
 
   async findAssociations(id: number, association: string, query: Criteria): Promise<Child[]> {
-    const parentRecord = await this.findOne(id);
-    if (!parentRecord) {
-      throw new NotFoundException(`Parent record with id ${id} not found`);
+    await this.ensureParentExists(id);
+
+    const relation = this.getRelationMetadata(association);
+    const relationBuilder = this.getParentRelationBuilder(relation);
+
+    const relatedEntities = (await relationBuilder.of(id).loadMany()) as Child[];
+    const relatedIds = Array.from(new Set(relatedEntities.map(child => child.id)));
+
+    if (relatedIds.length === 0) {
+      return [];
     }
 
-    const relation = this.parentRepository.metadata.findRelationWithPropertyPath(association);
-    if (!relation) {
-      throw new Error(
-        `Association '${association}' not found in ${this.parentRepository.metadata.name}`,
-      );
-    }
+    const associationWhere = { id: { in: relatedIds } } as EntityWhereCriteria<Child>;
+    const combinedWhere: EntityWhereCriteria<Child> = query.where
+      ? { and: [query.where as EntityWhereCriteria<Child>, associationWhere] }
+      : associationWhere;
 
     const criteria: Criteria = {
-      where: {
-        [this.resolveAssociationForeignKey(relation)]: parentRecord.id,
-        ...query.where,
-      },
       ...query,
+      where: combinedWhere,
     };
 
     return this.childWaterlineQueryService.findWithModifiers(criteria);
   }
 
   async countAssociations(id: number, association: string, query: CountCriteria): Promise<number> {
-    const parentRecord = await this.findOne(id);
-    if (!parentRecord) {
-      throw new NotFoundException(`Parent record with id ${id} not found`);
+    await this.ensureParentExists(id);
+
+    const relation = this.getRelationMetadata(association);
+    const relationBuilder = this.getParentRelationBuilder(relation);
+
+    const relatedEntities = (await relationBuilder.of(id).loadMany()) as Child[];
+    const relatedIds = Array.from(new Set(relatedEntities.map(child => child.id)));
+
+    if (relatedIds.length === 0) {
+      return 0;
     }
 
+    const associationWhere = { id: { in: relatedIds } } as EntityWhereCriteria<Child>;
+    const combinedWhere: EntityWhereCriteria<Child> = query.where
+      ? { and: [query.where as EntityWhereCriteria<Child>, associationWhere] }
+      : associationWhere;
+
+    const criteria: CountCriteria = {
+      where: combinedWhere,
+    };
+
+    return this.childWaterlineQueryService.countWithModifiers(criteria);
+  }
+
+  private getRelationMetadata(association: string): RelationMetadata {
     const relation = this.parentRepository.metadata.findRelationWithPropertyPath(association);
     if (!relation) {
       throw new Error(
         `Association '${association}' not found in ${this.parentRepository.metadata.name}`,
       );
     }
-
-    const criteria: CountCriteria = {
-      where: {
-        [this.resolveAssociationForeignKey(relation)]: parentRecord.id,
-        ...query.where,
-      },
-    };
-
-    return this.childWaterlineQueryService.countWithModifiers(criteria);
+    return relation;
   }
 
-  private resolveAssociationForeignKey(relation: any): string {
-    const inverseRelation = relation?.inverseRelation;
+  private getParentRelationBuilder(relation: RelationMetadata) {
+    return this.parentRepository
+      .createQueryBuilder()
+      .relation(this.parentRepository.metadata.target, relation.propertyPath);
+  }
 
-    if (relation?.isManyToMany || relation?.isOneToMany) {
-      const joinColumn = inverseRelation?.joinColumns?.[0];
-      if (joinColumn?.propertyName) {
-        return joinColumn.propertyName;
-      }
+  private async ensureParentExists(id: number): Promise<void> {
+    await this.findOne(id);
+  }
+
+  private async ensureChildExists(fk: number): Promise<void> {
+    const childRecord = await this.childWaterlineQueryService.findWithModifiers({
+      where: { id: fk },
+      limit: 1,
+    });
+
+    if (!childRecord || childRecord.length === 0) {
+      throw new NotFoundException(`Child record with id ${fk} not found`);
     }
-
-    if (relation?.isManyToOne || relation?.isOneToOne) {
-      const joinColumn = relation?.joinColumns?.[0];
-      if (joinColumn?.propertyName) {
-        return joinColumn.propertyName;
-      }
-    }
-
-    if (inverseRelation?.propertyName) {
-      return inverseRelation.propertyName;
-    }
-
-    if (relation?.propertyName) {
-      return relation.propertyName;
-    }
-
-    return 'id';
   }
 }

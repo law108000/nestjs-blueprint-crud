@@ -131,6 +131,103 @@ describe('Basic CRUD example (e2e)', () => {
       .expect(200);
 
     expect(emptyResponse.body).toHaveLength(0);
+
+    const orderRecord = await request(context.httpServer).get(`/orders/${orderId}`).expect(200);
+    expect(orderRecord.body.userId).toBeNull();
+
+    await request(context.httpServer).put(`/users/${userId}/orders`).send([orderId]).expect(200);
+
+    const reattachedOrders = await request(context.httpServer)
+      .get(`/users/${userId}/orders`)
+      .expect(200);
+
+    expect(reattachedOrders.body).toHaveLength(1);
+    expect(reattachedOrders.body[0].id).toBe(orderId);
+  });
+
+  it('reassigns collections via replace blueprint semantics', async () => {
+    const createUserOne = await request(context.httpServer)
+      .post('/users')
+      .send({
+        name: 'Alice',
+        email: 'alice@example.com',
+        age: 30,
+        status: 'active',
+      })
+      .expect(201);
+
+    const createUserTwo = await request(context.httpServer)
+      .post('/users')
+      .send({
+        name: 'Bruno',
+        email: 'bruno@example.com',
+        age: 34,
+        status: 'active',
+      })
+      .expect(201);
+
+    const userOneId = createUserOne.body.id;
+    const userTwoId = createUserTwo.body.id;
+
+    const orderOne = await request(context.httpServer)
+      .post('/orders')
+      .send({
+        orderNumber: 'ORD-101',
+        totalAmount: 59.99,
+        status: 'processing',
+        userId: userOneId,
+      })
+      .expect(201);
+
+    const orderTwo = await request(context.httpServer)
+      .post('/orders')
+      .send({
+        orderNumber: 'ORD-102',
+        totalAmount: 21.45,
+        status: 'pending',
+        userId: userOneId,
+      })
+      .expect(201);
+
+    const orderOneId = orderOne.body.id;
+    const orderTwoId = orderTwo.body.id;
+
+    await request(context.httpServer)
+      .put(`/users/${userTwoId}/orders`)
+      .send([orderOneId])
+      .expect(200);
+
+    const userTwoOrders = await request(context.httpServer)
+      .get(`/users/${userTwoId}/orders`)
+      .expect(200);
+
+    expect(userTwoOrders.body).toHaveLength(1);
+    expect(userTwoOrders.body[0].id).toBe(orderOneId);
+
+    const userOneOrders = await request(context.httpServer)
+      .get(`/users/${userOneId}/orders`)
+      .expect(200);
+
+    expect(userOneOrders.body).toHaveLength(1);
+    expect(userOneOrders.body[0].id).toBe(orderTwoId);
+
+    const reassignedOrder = await request(context.httpServer)
+      .get(`/orders/${orderOneId}`)
+      .expect(200);
+    expect(reassignedOrder.body.userId).toBe(userTwoId);
+
+    await request(context.httpServer).put(`/users/${userTwoId}/orders`).send([]).expect(200);
+
+    const clearedOrders = await request(context.httpServer)
+      .get(`/users/${userTwoId}/orders`)
+      .expect(200);
+
+    expect(clearedOrders.body).toHaveLength(0);
+
+    const detachedOrder = await request(context.httpServer)
+      .get(`/orders/${orderOneId}`)
+      .expect(200);
+    expect(detachedOrder.body.userId).toBeNull();
   });
 
   it.skip('supports bulk workflows and soft deletes for users', async () => {

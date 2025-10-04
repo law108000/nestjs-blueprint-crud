@@ -68,13 +68,15 @@ export class Order extends BaseEntity {
   })
   status!: string;
 
-  @ManyToOne(() => User, user => user.orders)
+  @ManyToOne(() => User, user => user.orders, { nullable: true })
   @JoinColumn({ name: 'userId' })
   @CreateProperty({
     description: 'Order owner user ID',
+    required: false,
   })
   @UpdateProperty({
     description: 'Order owner user ID',
+    required: false,
   })
   @QueryProperty({
     isEntity: true,
@@ -86,18 +88,20 @@ export class Order extends BaseEntity {
     entityName: 'User',
     description: 'Order owner user',
   })
-  user!: User;
+  user?: User | null;
 
-  @Column()
+  @Column({ nullable: true })
   @CreateProperty({
     description: 'Order owner user ID',
     type: 'number',
     example: 1,
+    required: false,
   })
   @UpdateProperty({
     description: 'Order owner user ID',
     type: 'number',
     example: 1,
+    required: false,
   })
   @QueryProperty({
     description: 'Order owner user ID',
@@ -106,5 +110,5 @@ export class Order extends BaseEntity {
   @SerializeProperty({
     description: 'Order owner user ID',
   })
-  userId!: number;
+  userId!: number | null;
 }

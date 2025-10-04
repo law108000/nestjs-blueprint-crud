@@ -16,7 +16,7 @@ import { User } from '../entities/user.entity';
       database: process.env.DB_NAME ?? 'nestjs_crud_example',
       entities: [User, Order],
       synchronize: true, // Only use in development environment
-  logging: process.env.NODE_ENV !== 'test',
+      logging: process.env.NODE_ENV !== 'test',
     }),
   ],
   providers: [

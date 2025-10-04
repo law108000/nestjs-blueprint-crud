@@ -6,6 +6,7 @@ A minimal showcase of the `nestjs-blueprint-crud` package covering standard CRUD
 
 - Automatic CRUD controller wiring for the `User` and `Order` entities
 - Association endpoints between users and orders
+- Sails-style blueprint semantics (raw-array `replace`, non-destructive `remove`, and collection routing)
 - Custom business logic layered on top of the generated base service
 - Bootstrapping a NestJS application against MySQL using TypeORM
 
@@ -52,5 +53,7 @@ npm run db:stop
   ```
 
   This suite is safe to extend with additional flows without impacting other showcases.
+
+  The existing specs verify Waterline-style queries, `add/remove/replace` association flows, and the raw-array payloads required for Sails blueprint parity.
 
 > The example test harness relies on the shared utilities in `examples/tooling/test-helpers.ts` for bootstrapping and table resets.

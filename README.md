@@ -254,6 +254,18 @@ PUT    /users/:id/orders        # Replace all order associations
 DELETE /users/:id/orders/:fk    # Remove order association
 ```
 
+## Sails blueprint compatibility
+
+This library mirrors the [Sails blueprint API](https://sailsjs.com/documentation/reference/blueprint-api) so you can migrate Waterline-style apps with minimal refactoring:
+
+- **RESTful routes**: `find`, `findOne`, `create`, `update` (`PATCH`), and `destroy` (`DELETE`) are exposed at the conventional `/:modelIdentity` and `/:modelIdentity/:id` paths.
+- **Association routes**: `populate`, `add`, `remove`, and `replace` follow the Sails signatures (`GET /:model/:id/:association`, `PUT /:model/:id/:association/:fk`, `DELETE /:model/:id/:association/:fk`, `PUT /:model/:id/:association`).
+- **Raw array payloads**: The `replace` route accepts either `{ "ids": [...] }` _or_ a bare JSON array like `[1,2,3]`, matching the Sails shortcut syntax.
+- **Non-destructive removals**: Removing a child from a collection unlinks the relation (it does not delete the record), mirroring `removeFromCollection` semantics.
+- **Waterline-style queries**: All endpoints understand the `where`, `limit`, `skip`, `sort`, `populate`, `select`, and `omit` options familiar to Waterline.
+
+These guarantees are covered by the example end-to-end suite so regressions against Sails behaviour are caught automatically.
+
 ## Custom Services
 
 If you need custom business logic, you can extend the base service:
