@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
+import type { RelationQueryBuilder } from 'typeorm/query-builder/RelationQueryBuilder';
 import type { RelationMetadata } from 'typeorm/metadata/RelationMetadata';
 import type { BaseEntity } from '../entities/base.entity';
 import { WaterlineQueryService } from './waterline-query.service';
@@ -30,11 +31,18 @@ export class BaseAssociationService<
 
     try {
       const relationBuilder = this.getParentRelationBuilder(relation);
+      const existingRelations = await this.loadRelatedEntities(relation, relationBuilder, id);
 
       if (relation.isManyToMany || relation.isOneToMany) {
-        await relationBuilder.of(id).add(fk);
+        const alreadyAssociated = existingRelations.some(child => child.id === fk);
+        if (!alreadyAssociated) {
+          await relationBuilder.of(id).add(fk);
+        }
       } else {
-        await relationBuilder.of(id).set(fk);
+        const existingChild = existingRelations[0];
+        if (!existingChild || existingChild.id !== fk) {
+          await relationBuilder.of(id).set(fk);
+        }
       }
 
       return this.findOne(id, relation.propertyName);
@@ -90,7 +98,7 @@ export class BaseAssociationService<
       if (relation.isManyToMany) {
         await relationBuilder.of(id).set(normalizedIds);
       } else if (relation.isOneToMany) {
-        const existingChildren = (await relationBuilder.of(id).loadMany()) as Child[];
+        const existingChildren = await this.loadRelatedEntities(relation, relationBuilder, id);
         const existingIds = existingChildren.map(child => child.id);
 
         const idsToRemove = existingIds.filter(existingId => !normalizedIds.includes(existingId));
@@ -120,7 +128,7 @@ export class BaseAssociationService<
     const relation = this.getRelationMetadata(association);
     const relationBuilder = this.getParentRelationBuilder(relation);
 
-    const relatedEntities = (await relationBuilder.of(id).loadMany()) as Child[];
+    const relatedEntities = await this.loadRelatedEntities(relation, relationBuilder, id);
     const relatedIds = Array.from(new Set(relatedEntities.map(child => child.id)));
 
     if (relatedIds.length === 0) {
@@ -146,7 +154,7 @@ export class BaseAssociationService<
     const relation = this.getRelationMetadata(association);
     const relationBuilder = this.getParentRelationBuilder(relation);
 
-    const relatedEntities = (await relationBuilder.of(id).loadMany()) as Child[];
+    const relatedEntities = await this.loadRelatedEntities(relation, relationBuilder, id);
     const relatedIds = Array.from(new Set(relatedEntities.map(child => child.id)));
 
     if (relatedIds.length === 0) {
@@ -175,10 +183,25 @@ export class BaseAssociationService<
     return relation;
   }
 
-  private getParentRelationBuilder(relation: RelationMetadata) {
+  private getParentRelationBuilder(relation: RelationMetadata): RelationQueryBuilder<Parent> {
     return this.parentRepository
       .createQueryBuilder()
       .relation(this.parentRepository.metadata.target, relation.propertyPath);
+  }
+
+  private async loadRelatedEntities(
+    relation: RelationMetadata,
+    relationBuilder: RelationQueryBuilder<Parent>,
+    id: number,
+  ): Promise<Child[]> {
+    const relationOperator = relationBuilder.of(id);
+
+    if (relation.isManyToMany || relation.isOneToMany) {
+      return ((await relationOperator.loadMany()) ?? []) as Child[];
+    }
+
+    const related = (await relationOperator.loadOne()) as Child | null;
+    return related ? [related] : [];
   }
 
   private async ensureParentExists(id: number): Promise<void> {

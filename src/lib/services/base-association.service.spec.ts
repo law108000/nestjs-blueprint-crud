@@ -9,6 +9,8 @@ describe('BaseAssociationService', () => {
   let parentRepository: any;
   let childRepository: any;
   let relationConfig: any;
+  let relationBuilder: any;
+  let relationOperator: any;
 
   beforeEach(() => {
     relationConfig = {
@@ -31,6 +33,22 @@ describe('BaseAssociationService', () => {
       },
       save: jest.fn(),
     };
+
+    relationOperator = {
+      add: jest.fn().mockResolvedValue(undefined),
+      remove: jest.fn().mockResolvedValue(undefined),
+      set: jest.fn().mockResolvedValue(undefined),
+      loadMany: jest.fn().mockResolvedValue([]),
+      loadOne: jest.fn().mockResolvedValue(null),
+    };
+
+    relationBuilder = {
+      of: jest.fn().mockReturnValue(relationOperator),
+    };
+
+    parentRepository.createQueryBuilder = jest.fn().mockReturnValue({
+      relation: jest.fn().mockReturnValue(relationBuilder),
+    });
 
     childRepository = {
       metadata: {
@@ -76,14 +94,15 @@ describe('BaseAssociationService', () => {
         where: { id: 10 },
         limit: 1,
       });
-      expect(parentRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 1, children: [{ id: 10 }] }),
-      );
+      expect(relationBuilder.of).toHaveBeenCalledWith(1);
+      expect(relationOperator.add).toHaveBeenCalledWith(10);
       expect(result).toEqual(enrichedRecord);
     });
 
     it('should avoid duplicate association and skip save', async () => {
       const parentRecord = { id: 1, children: [{ id: 10 }] };
+
+      relationOperator.loadMany.mockResolvedValueOnce(parentRecord.children);
 
       parentWaterlineQueryService.findWithModifiers
         .mockResolvedValueOnce([parentRecord])
@@ -92,7 +111,7 @@ describe('BaseAssociationService', () => {
 
       await service.addAssociation(1, 'children', 10);
 
-      expect(parentRepository.save).not.toHaveBeenCalled();
+      expect(relationOperator.add).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when child is missing', async () => {
@@ -126,9 +145,7 @@ describe('BaseAssociationService', () => {
 
       const result = await service.removeAssociation(1, 'children', 10);
 
-      expect(parentRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 1, children: [{ id: 20 }] }),
-      );
+      expect(relationOperator.remove).toHaveBeenCalledWith(10);
       expect(result).toEqual(cleanedRecord);
     });
 
@@ -145,9 +162,7 @@ describe('BaseAssociationService', () => {
 
       const result = await service.removeAssociation(1, 'children', 10);
 
-      expect(parentRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 1, children: null }),
-      );
+      expect(relationOperator.set).toHaveBeenCalledWith(null);
       expect(result).toEqual(updatedRecord);
     });
   });
@@ -167,12 +182,7 @@ describe('BaseAssociationService', () => {
       expect(childWaterlineQueryService.findWithModifiers).toHaveBeenCalledWith({
         where: { id: { in: [10, 20] } },
       });
-      expect(parentRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: 1,
-          children: [{ id: 10 }, { id: 20 }],
-        }),
-      );
+      expect(relationOperator.set).toHaveBeenCalledWith([10, 20]);
       expect(result).toEqual(hydratedRecord);
     });
 
@@ -186,9 +196,7 @@ describe('BaseAssociationService', () => {
 
       const result = await service.replaceAssociations(1, 'children', []);
 
-      expect(parentRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 1, children: [] }),
-      );
+      expect(relationOperator.set).toHaveBeenCalledWith([]);
       expect(result).toEqual(refreshedRecord);
     });
 
@@ -211,14 +219,15 @@ describe('BaseAssociationService', () => {
       const criteria: Criteria = { where: { status: 'active' }, limit: 5 };
       const expected = [{ id: 11 }];
 
+      relationOperator.loadMany.mockResolvedValueOnce([{ id: 11 }]);
       parentWaterlineQueryService.findWithModifiers.mockResolvedValue([parentRecord]);
       childWaterlineQueryService.findWithModifiers.mockResolvedValue(expected);
 
       const result = await service.findAssociations(1, 'children', criteria);
 
       expect(childWaterlineQueryService.findWithModifiers).toHaveBeenCalledWith({
-        where: { parent: parentRecord.id, status: 'active' },
-        ...criteria,
+        where: { and: [{ status: 'active' }, { id: { in: [11] } }] },
+        limit: 5,
       });
       expect(result).toEqual(expected);
     });
@@ -230,13 +239,14 @@ describe('BaseAssociationService', () => {
       const parentRecord = { id: 1 };
       const criteria: CountCriteria = { where: { status: 'active' } };
 
+      relationOperator.loadMany.mockResolvedValueOnce([{ id: 11 }]);
       parentWaterlineQueryService.findWithModifiers.mockResolvedValue([parentRecord]);
       childWaterlineQueryService.countWithModifiers.mockResolvedValue(3);
 
       const result = await service.countAssociations(1, 'children', criteria);
 
       expect(childWaterlineQueryService.countWithModifiers).toHaveBeenCalledWith({
-        where: { parent: parentRecord.id, status: 'active' },
+        where: { and: [{ status: 'active' }, { id: { in: [11] } }] },
       });
       expect(result).toBe(3);
     });
