@@ -1,7 +1,10 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['<rootDir>/test/e2e/**/*.e2e-spec.ts'],
+  testMatch: [
+    '<rootDir>/test/e2e/**/*.e2e-spec.ts',
+    '<rootDir>/examples/apps/**/test/**/*.e2e-spec.ts',
+  ],
   moduleNameMapper: {
     '^nestjs-blueprint-crud$': '<rootDir>/src/index.ts',
   },

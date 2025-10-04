@@ -1,198 +1,96 @@
-# Usage Examples
+# Example Workspace
 
-This directory contains complete usage examples for the `nestjs-blueprint-crud` package.
+This directory hosts runnable applications and short-lived reproductions that demonstrate different features of `nestjs-blueprint-crud`.
 
-## File Structure
+## Directory layout
 
 ```
 examples/
-├── entities/           # Entity definitions
-│   ├── user.entity.ts  # User entity
-│   └── order.entity.ts # Order entity
-├── modules/            # Module configurations
-│   ├── order.module.ts      # Order CRUD module
-│   ├── user.module.ts       # User CRUD module
-│   └── user-order.module.ts # User-Order association module
-├── services/           # Custom services
-│   └── user.service.ts # Extended user service
-├── app.module.ts       # Main application module
-└── README.md          # Documentation
+├── apps/                     # Long-lived, documented showcase apps
+│   └── basic-crud/                # Current flagship example
+│       ├── README.md
+│       ├── src/
+│       │   ├── app.module.ts
+│       │   ├── entities/
+│       │   ├── main.ts
+│       │   ├── modules/
+│       │   └── services/
+│       ├── test/
+│       │   └── basic-crud.e2e-spec.ts
+│       └── tsconfig.json
+├── shared/                        # Reusable entities, fixtures, configs, …
+│   ├── README.md
+│   ├── config/
+│   ├── entities/
+│   └── seeders/
+├── tooling/                       # Shared tooling & helpers for all showcases
+│   ├── jest.base.config.js
+│   ├── test-helpers.ts
+│   └── tsconfig.base.json
+└── tsconfig.json                  # Workspace-level configuration
 ```
 
-## Core Concepts
+> Import modules and services directly from `apps/<scenario>/src/**`. Root-level shims were removed to keep reuse paths explicit.
 
-### 1. Entity Definition
+## Managing multiple scenarios
 
-Use decorators to mark entity property behaviors:
+1. **Create a new app:** copy `apps/basic-crud` into `apps/<scenario-name>` and tailor the modules/entities. Keep each app self-contained within its `src` directory.
+2. **Share code intentionally:** place reusable assets in `shared/` and import them via the `@examples/shared/*` path alias to avoid duplication.
+3. **Capture reproductions:** open a dated folder under `repros/` (for example, `repros/2025-10-03-user-sort/`) with a short README that outlines steps to reproduce, expected vs actual behaviour, and clean-up notes. Remove or archive folders once the fix lands.
+4. **Centralize configuration:** extend `tooling/tsconfig.base.json` and `tooling/jest.base.config.js` from each example so TypeScript and Jest stay in sync across scenarios.
 
-- `@CreateProperty()` - Mark properties required for creation
-- `@UpdateProperty()` - Mark properties that can be modified during updates
-- `@QueryProperty()` - Mark properties that can be queried
-- `@SerializeProperty()` - Mark properties to include in output
-
-### 2. Auto-Generated APIs
-
-Each entity automatically generates the following endpoints:
-
-**Basic CRUD:**
-
-- `GET /users` - Query user list
-- `GET /users/count` - User count statistics
-- `GET /users/:id` - Query single user
-- `POST /users` - Create user
-- `PATCH /users/:id` - Update user
-- `DELETE /users/:id` - Delete user
-- `GET /orders` - Query order list
-- `POST /orders` - Create order
-
-**Bulk Operations:**
-
-- `POST /users/bulk` - Bulk create
-- `PATCH /users/bulk` - Bulk update
-- `DELETE /users/bulk` - Bulk delete
-
-**Association Operations:**
-
-- `GET /users/:id/orders` - Query user orders
-- `PUT /users/:id/orders/:fk` - Add order association
-- `DELETE /users/:id/orders/:fk` - Remove order association
-
-### 3. Query Syntax
-
-Supports complex query conditions:
-
-```javascript
-// Basic query
-GET /users?where={"name":"John"}
-
-// Comparison operators
-GET /users?where={"age":{">=":18,"<=":65}}
-
-// Contains operator
-GET /users?where={"name":{"contains":"John"}}
-
-// Logical operators
-GET /users?where={"and":[{"age":{">=":18}},{"status":"active"}]}
-
-// Sorting and pagination
-GET /users?sort=name ASC&limit=10&skip=0
-
-// Field selection
-GET /users?select=id,name,email
-
-// Association queries
-GET /users?populate=orders
-```
-
-## Practical Application Examples
-
-### Creating Users
+## Running an example
 
 ```bash
-curl -X POST http://localhost:3000/orders \
-  -H "Content-Type: application/json" \
-  -d '{
-    "orderNumber": "ORD-001",
-    "totalAmount": 99.99,
-    "status": "pending",
-    "userId": 1
-  }'
-```
-
-### Querying Active Users
-
-```bash
-curl "http://localhost:3000/users?where=%7B%22status%22%3A%22active%22%7D"
-```
-
-### Age Range Query
-
-```bash
-curl "http://localhost:3000/users?where=%7B%22age%22%3A%7B%22%3E%3D%22%3A18%2C%22%3C%3D%22%3A65%7D%7D"
-```
-
-### Bulk Update
-
-```bash
-curl -X PATCH http://localhost:3000/users/bulk \
-  -H "Content-Type: application/json" \
-  -d '{
-    "where": {"status": "inactive"},
-    "data": {"status": "active"}
-  }'
-```
-
-### Create Order and Associate with User
-
-```bash
-# 1. Create order
-curl -X POST http://localhost:3000/orders \
-  -H "Content-Type: application/json" \
-  -d '{
-    "orderNumber": "ORD-001",
-    "totalAmount": 99.99,
-    "status": "pending",
-    "user": 1
-  }'
-
-# 2. Or through association endpoint
-curl -X PUT http://localhost:3000/users/1/orders/1
-```
-
-## Custom Extensions
-
-See `services/user.service.ts` to learn how to compose the generated base service when adding custom business logic:
-
-```typescript
-// Custom business logic
-const activeUsers = await userService.findActiveUsers();
-const userStats = await userService.getUserStatistics();
-```
-
-## Running Examples
-
-1. Install dependencies:
-
-```bash
+# Install dependencies at the repo root
 npm install
-```
 
-2. Start the MySQL service (runs on `localhost:3307` by default):
-
-```bash
+# Start the shared MySQL test container (defaults to localhost:3307)
 npm run db:start
-```
 
-3. Launch the example application with the provided bootstrap script:
+# Launch the desired example (basic CRUD shown)
+DB_HOST=127.0.0.1 \
+DB_PORT=3307 \
+DB_USERNAME=root \
+DB_PASSWORD=password \
+DB_NAME=nestjs_crud_example \
+npx ts-node -r tsconfig-paths/register examples/apps/basic-crud/src/main.ts
 
-```bash
- DB_HOST=127.0.0.1 DB_PORT=3307 DB_USERNAME=root DB_PASSWORD=password DB_NAME=nestjs_crud_example npx ts-node -r tsconfig-paths/register examples/main.ts
-```
-
-4. Access Swagger documentation:
-
-```
-http://localhost:3000/api
-```
-
-5. When finished, stop the database container:
-
-```bash
+# Tear everything down when finished
 npm run db:stop
 ```
 
-### End-to-End Tests
+Swagger for each example is available at `http://localhost:3000/api` by default.
 
-The repository ships with E2E coverage that exercises the example modules against a live MySQL instance:
+## Testing
 
-```bash
-npm run test:e2e
+- Repository-wide checks (library smoke tests and aggregator example):
+
+  ```bash
+  npm run test:e2e
+  ```
+
+- Example-focused suites live in `examples/apps/<scenario>/test`. They are picked up automatically by the same Jest run, or you can scope to a single showcase:
+
+  ```bash
+  npm run test:e2e -- --testPathPattern=examples/apps/basic-crud/test
+  ```
+
+  Use the scenario directory in the `--testPathPattern` flag to target other showcases.
+
+## Legacy import paths
+
+Earlier versions exposed re-export shims such as `examples/app.module.ts` and `examples/services/user.service.ts`. Those files have been removed. Update any downstream code to import from the canonical paths under `examples/apps/<scenario>/src` instead—e.g.:
+
+```
+import { AppModule } from 'examples/apps/basic-crud/src/app.module';
 ```
 
-The script automatically starts the Dockerized database, executes the Jest suite in-band, and tears the container down afterward.
+If you must keep compatibility for downstream consumers, consider publishing a small wrapper inside your own project rather than re-introducing the shared shims here.
 
-## Important Notes
+## Naming conventions & hygiene
 
-- The application expects a MySQL instance; use the provided Docker Compose file or supply equivalent connection variables
-- The example modules import from the local `nestjs-blueprint-crud` source using TypeScript path mapping—adjust the imports to the published package name when consuming from npm
-- In production environments, disable `synchronize: true` and manage migrations explicitly
+- Use kebab-case for scenario folders (e.g., `advanced-filters`, `issue-1234-bulk-delete`).
+- Prepend reproduction folders with a sortable ISO date (`YYYY-MM-DD`) to make pruning and triaging simpler.
+- Document the purpose, setup commands, and expected output in each example or reproduction `README`.
+- Prefer promoting resolved reproductions into polished `apps/` examples so they remain covered by regression tests.

@@ -15,15 +15,14 @@ import { User } from '../entities/user.entity';
       password: process.env.DB_PASSWORD ?? 'password',
       database: process.env.DB_NAME ?? 'nestjs_crud_example',
       entities: [User, Order],
-      synchronize: true,
-      logging: true,
+      synchronize: true, // Only use in development environment
+  logging: process.env.NODE_ENV !== 'test',
     }),
   ],
   providers: [
     {
       provide: 'DATABASE_CONNECTION',
-      useFactory: (dataSource: DataSource) => dataSource,
-      inject: [DataSource],
+      useExisting: DataSource,
     },
   ],
   exports: ['DATABASE_CONNECTION', TypeOrmModule],
