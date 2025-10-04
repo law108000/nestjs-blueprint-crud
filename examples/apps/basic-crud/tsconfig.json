@@ -1,0 +1,16 @@
+{
+  "extends": "../../tooling/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "tsBuildInfoFile": "./.tsbuildinfo",
+    "types": ["node"],
+    "baseUrl": "../../..",
+    "paths": {
+      "@examples/shared/*": ["examples/shared/*"],
+      "nestjs-blueprint-crud": ["src/index.ts"],
+      "@nestjs/*": ["node_modules/@nestjs/*"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

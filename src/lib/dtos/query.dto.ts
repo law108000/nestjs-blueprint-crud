@@ -117,8 +117,8 @@ export class ReplaceAssociationsDto {
   })
   @IsOptional()
   @Type(() => Number)
-  ids?: number[];
+  ids?: (number | string)[];
 }
 
-export type CreateRequestDto = Record<string, any>;
-export type UpdateRequestDto = Record<string, any>;
+export type CreateRequestDto = Record<string, unknown>;
+export type UpdateRequestDto = Record<string, unknown>;

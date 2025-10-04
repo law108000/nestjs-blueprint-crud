@@ -49,15 +49,36 @@ export class BooleanTransformer implements ValueTransformer {
 }
 
 export class IntTransformer implements ValueTransformer {
-  to(value: any): number | null {
-    if (value === null || value === undefined) return null;
-    if (typeof value === 'string') return parseInt(value, 10);
-    return value;
+  to(value: unknown): number | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof value === 'string') {
+      return parseInt(value, 10);
+    }
+
+    if (typeof value === 'number') {
+      return value;
+    }
+
+    return null;
   }
 
-  from(value: any): number | null {
-    if (value === null || value === undefined) return null;
-    return Number(value);
+  from(value: unknown): number | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof value === 'string') {
+      return Number(value);
+    }
+
+    if (typeof value === 'number') {
+      return value;
+    }
+
+    return null;
   }
 }
 
@@ -69,7 +90,7 @@ export abstract class BaseEntity {
   id!: number;
 
   @CreateDateColumn({
-    type: 'bigint',
+    type: 'timestamp',
     transformer: new DateTransformer(),
     comment: 'Record creation timestamp',
   })
@@ -77,7 +98,7 @@ export abstract class BaseEntity {
   createdAt?: number;
 
   @UpdateDateColumn({
-    type: 'bigint',
+    type: 'timestamp',
     transformer: new DateTransformer(),
     comment: 'Record last update timestamp',
   })
@@ -85,7 +106,7 @@ export abstract class BaseEntity {
   updatedAt?: number;
 
   @DeleteDateColumn({
-    type: 'bigint',
+    type: 'timestamp',
     transformer: new DateTransformer(true),
     comment: 'Record deletion timestamp (soft delete)',
   })

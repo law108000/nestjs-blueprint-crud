@@ -18,7 +18,7 @@ import { ValidateIdPipe } from '../pipes/validate-id.pipe';
 import {
   ListQueryParamsRequestDto,
   CountRequestDto,
-  ReplaceAssociationsDto,
+  type ReplaceAssociationsDto,
 } from '../dtos/query.dto';
 
 @Controller()
@@ -101,13 +101,34 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
   @ApiOperation({ summary: 'Replace associations' })
   @ApiParam({ name: 'id', type: 'number', description: 'Parent entity ID' })
   @ApiParam({ name: 'association', type: 'string', description: 'Association name' })
-  @ApiBody({ type: ReplaceAssociationsDto })
+  @ApiBody({
+    schema: {
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            ids: {
+              type: 'array',
+              items: { type: 'number' },
+              example: [1, 2, 3],
+            },
+          },
+        },
+        {
+          type: 'array',
+          items: { type: 'number' },
+          example: [1, 2, 3],
+        },
+      ],
+    },
+  })
   @ApiResponse({ status: 200, description: 'Associations replaced successfully' })
   async replaceAssociations(
     @Param('id', ValidateIdPipe) id: number,
-    @Body() body: ReplaceAssociationsDto,
+    @Body() body: ReplaceAssociationsDto | number[],
   ): Promise<Parent> {
-    const { ids = [] } = body;
+    const idsPayload = Array.isArray(body) ? body : (body?.ids ?? []);
+    const ids = idsPayload.map(value => Number(value)).filter(value => !Number.isNaN(value));
     return this.baseAssociationService.replaceAssociations(id, this.association, ids);
   }
 

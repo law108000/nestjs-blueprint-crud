@@ -144,6 +144,7 @@ export class BaseController<T extends BaseEntity> {
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post(':id/restore')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Restore soft-deleted entity' })
   @ApiParam({ name: 'id', type: 'number', description: 'Entity ID' })
   @ApiResponse({ status: 200, description: 'Entity restored successfully' })
