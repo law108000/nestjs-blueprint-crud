@@ -88,7 +88,7 @@ export class Order extends BaseEntity {
   })
   user!: User;
 
-  @Column({ nullable: true })
+  @Column()
   @CreateProperty({
     description: 'Order owner user ID',
     type: 'number',
@@ -106,5 +106,5 @@ export class Order extends BaseEntity {
   @SerializeProperty({
     description: 'Order owner user ID',
   })
-  userId!: number | null;
+  userId!: number;
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
 import type { BaseEntity } from '../entities/base.entity';
@@ -80,7 +81,13 @@ export class BaseAssociationService<
     }
 
     try {
-      if (relation.isManyToMany || relation.isOneToMany) {
+      if (relation.isManyToMany) {
+        const currentAssociations = (parentRecord as any)[association] || [];
+        const filteredAssociations = currentAssociations.filter((item: any) => item.id !== fk);
+        (parentRecord as any)[association] = filteredAssociations;
+        await this.parentRepository.save(parentRecord);
+      } else if (relation.isOneToMany) {
+        await this.childRepository.softDelete(fk);
         const currentAssociations = (parentRecord as any)[association] || [];
         const filteredAssociations = currentAssociations.filter((item: any) => item.id !== fk);
         (parentRecord as any)[association] = filteredAssociations;
@@ -153,7 +160,7 @@ export class BaseAssociationService<
 
     const criteria: Criteria = {
       where: {
-        [relation.inverseRelation?.propertyName || 'id']: parentRecord.id,
+        [this.resolveAssociationForeignKey(relation)]: parentRecord.id,
         ...query.where,
       },
       ...query,
@@ -177,11 +184,39 @@ export class BaseAssociationService<
 
     const criteria: CountCriteria = {
       where: {
-        [relation.inverseRelation?.propertyName || 'id']: parentRecord.id,
+        [this.resolveAssociationForeignKey(relation)]: parentRecord.id,
         ...query.where,
       },
     };
 
     return this.childWaterlineQueryService.countWithModifiers(criteria);
+  }
+
+  private resolveAssociationForeignKey(relation: any): string {
+    const inverseRelation = relation?.inverseRelation;
+
+    if (relation?.isManyToMany || relation?.isOneToMany) {
+      const joinColumn = inverseRelation?.joinColumns?.[0];
+      if (joinColumn?.propertyName) {
+        return joinColumn.propertyName;
+      }
+    }
+
+    if (relation?.isManyToOne || relation?.isOneToOne) {
+      const joinColumn = relation?.joinColumns?.[0];
+      if (joinColumn?.propertyName) {
+        return joinColumn.propertyName;
+      }
+    }
+
+    if (inverseRelation?.propertyName) {
+      return inverseRelation.propertyName;
+    }
+
+    if (relation?.propertyName) {
+      return relation.propertyName;
+    }
+
+    return 'id';
   }
 }

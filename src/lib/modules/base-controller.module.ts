@@ -7,12 +7,16 @@ import {
   ForbiddenException,
   Get,
   Inject,
+  Param,
   Module,
   Put,
+  Post,
+  Patch,
   Query,
   UseInterceptors,
   UsePipes,
   ValidationPipe,
+  HttpCode,
   type DynamicModule,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -30,6 +34,7 @@ import {
   CreateRequestDto,
   UpdateRequestDto,
 } from '../dtos/query.dto';
+import { ValidateIdPipe } from '../pipes/validate-id.pipe';
 
 export interface BaseControllerConfig<T extends BaseEntity> {
   entity: new () => T;
@@ -45,14 +50,14 @@ export interface BaseControllerConfig<T extends BaseEntity> {
   };
   dtos?: {
     get?: new () => GetQueryParamsRequestDto;
-    record?: new () => any;
+    record?: new () => Record<string, unknown>;
   };
 }
 
 @Module({})
 export class BaseControllerModule {
   static forEntity<T extends BaseEntity>(config: BaseControllerConfig<T>): DynamicModule {
-    const { entity, prefix, tagName, permissions = {}, dtos = {} } = config;
+    const { entity, prefix, tagName, permissions = {}, dtos } = config;
     const {
       list = true,
       count = true,
@@ -61,11 +66,21 @@ export class BaseControllerModule {
       update = true,
       delete: del = true,
     } = permissions;
-    const { get: GetDto = GetQueryParamsRequestDto } = dtos;
+    const GetDto = (dtos?.get ?? GetQueryParamsRequestDto) as new () => GetQueryParamsRequestDto;
 
     const { CountQueryDto, ListQueryDto } = generateSwaggerQueryDtoForEntity(config.entity);
     const { CreateDto, UpdateDto } = generateSwaggerCreateUpdateDtoForEntity(config.entity);
     const RecordDto = generateSwaggerRecordDtoForEntity(config.entity);
+    const baseServiceModule = BaseServiceModule.forEntity(entity);
+    const toArray = <V>(value?: V | V[]): V[] => {
+      if (!value) {
+        return [];
+      }
+      return Array.isArray(value) ? value : [value];
+    };
+    const baseServiceImports = toArray(baseServiceModule.imports);
+    const baseServiceProviders = toArray(baseServiceModule.providers);
+    const baseServiceExports = toArray(baseServiceModule.exports);
 
     @Controller({ path: prefix })
     @ApiTags(tagName)
@@ -86,9 +101,9 @@ export class BaseControllerModule {
         type: () => ListQueryDto,
       })
       @ApiOkResponse({ type: RecordDto, isArray: true })
-      async find(@Query() query: ListQueryParamsRequestDto = {}): Promise<T[]> {
+      async find(@Query() query?: ListQueryParamsRequestDto): Promise<T[]> {
         if (!list) throw new ForbiddenException();
-        return await super.find(query as any);
+        return await super.find((query ?? {}) as ListQueryParamsRequestDto);
       }
 
       @Get('count')
@@ -115,7 +130,7 @@ export class BaseControllerModule {
       )
       @ApiOkResponse({ type: RecordDto })
       async findOne(
-        id: number,
+        @Param('id', ValidateIdPipe) id: number,
         @Query() query: GetQueryParamsRequestDto = new GetDto(),
       ): Promise<T> {
         if (!get) throw new ForbiddenException();
@@ -123,7 +138,8 @@ export class BaseControllerModule {
       }
 
       @UseInterceptors(ClassSerializerInterceptor)
-      @Put()
+      @Post()
+      @HttpCode(201)
       @UsePipes(
         new ValidationPipe({
           transform: true,
@@ -139,6 +155,25 @@ export class BaseControllerModule {
       }
 
       @UseInterceptors(ClassSerializerInterceptor)
+      @Patch(':id')
+      @UsePipes(
+        new ValidationPipe({
+          transform: true,
+          expectedType: UpdateDto,
+          exceptionFactory: errors => new BadRequestException(errors),
+          transformOptions: { exposeUnsetFields: false, strategy: 'excludeAll' },
+        }),
+      )
+      @ApiOkResponse({ type: RecordDto })
+      async update(
+        @Param('id', ValidateIdPipe) id: number,
+        @Body() entity: UpdateRequestDto = new UpdateDto(),
+      ): Promise<T> {
+        if (!update) throw new ForbiddenException();
+        return await super.update(id, entity);
+      }
+
+      @UseInterceptors(ClassSerializerInterceptor)
       @Put(':id')
       @UsePipes(
         new ValidationPipe({
@@ -149,7 +184,10 @@ export class BaseControllerModule {
         }),
       )
       @ApiOkResponse({ type: RecordDto })
-      async update(id: number, @Body() entity: UpdateRequestDto = new UpdateDto()): Promise<T> {
+      async replace(
+        @Param('id', ValidateIdPipe) id: number,
+        @Body() entity: UpdateRequestDto = new UpdateDto(),
+      ): Promise<T> {
         if (!update) throw new ForbiddenException();
         return await super.update(id, entity);
       }
@@ -157,7 +195,7 @@ export class BaseControllerModule {
       @UseInterceptors(ClassSerializerInterceptor)
       @Delete(':id')
       @ApiOkResponse({ type: RecordDto })
-      async remove(id: number): Promise<T> {
+      async remove(@Param('id', ValidateIdPipe) id: number): Promise<T> {
         if (!del) throw new ForbiddenException();
         return await super.remove(id);
       }
@@ -165,15 +203,16 @@ export class BaseControllerModule {
 
     return {
       module: BaseControllerModule,
-      imports: [BaseServiceModule.forEntity(entity)],
+      imports: baseServiceImports,
       providers: [
+        ...baseServiceProviders,
         {
           provide: `${entity.name}BaseController`,
           useFactory: service => new DynamicBaseController(service),
           inject: [getBaseServiceInjectToken(entity)],
         },
       ],
-      exports: [`${entity.name}BaseController`],
+      exports: [...baseServiceExports, `${entity.name}BaseController`],
       controllers: [DynamicBaseController],
     };
   }
