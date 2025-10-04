@@ -250,19 +250,6 @@ Supports rich operators and logical groupings:
     { "email": { "contains": "john" } }
   ]
 }
-
-  "and": [
-    { "age": { ">": 18 } },
-    { "status": "active" }
-  ]
-}
-
-{
-  "or": [
-    { "name": { "contains": "John" } },
-    { "email": { "contains": "john" } }
-  ]
-}
 ```
 
 ## Association Operations
