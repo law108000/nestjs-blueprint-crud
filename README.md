@@ -40,7 +40,7 @@ This NestJS implementation goes beyond the original Sails.js blueprint concept b
 🎨 **Decorator-Driven**: Use decorators to define API behavior  
 📚 **Swagger Integration**: Automatic API documentation generation  
 🛡️ **Type Safety**: Full TypeScript support  
-🎯 **Permission Control**: Fine-grained operation permission settings  
+🎯 **Permission Control**: Fine-grained operation permission settings
 
 ## Installation
 
@@ -68,12 +68,12 @@ Follow the steps in [Installation](#installation) to add the package and require
 
 ```typescript
 import { Entity, Column } from 'typeorm';
-import { 
-  BaseEntity, 
-  CreateProperty, 
-  UpdateProperty, 
-  QueryProperty, 
-  SerializeProperty 
+import {
+  BaseEntity,
+  CreateProperty,
+  UpdateProperty,
+  QueryProperty,
+  SerializeProperty,
 } from 'nestjs-blueprint-crud';
 
 @Entity()
@@ -217,6 +217,7 @@ GET /users?where=%7B%22name%22%3A%22John%22%2C%22age%22%3A%7B%22%3E%3D%22%3A18%7
 ```
 
 `ListQueryParamsRequestDto` understands the following keys:
+
 - `where` — JSON string representing Waterline-style criteria
 - `limit`, `skip` — pagination controls
 - `sort` — e.g. `createdAt DESC`
@@ -363,6 +364,7 @@ While this library maintains API compatibility with Sails.js blueprints for easy
 **Migration-Friendly Design**: Existing Sails.js applications can migrate with minimal refactoring, as the core API patterns and query syntax are preserved.
 
 **Enhanced RESTful Routes**: All standard blueprint routes are supported with additional modern endpoints:
+
 - Standard CRUD: `GET /users`, `POST /users`, `PATCH /users/:id`, `DELETE /users/:id`
 - Advanced operations: `GET /users/count`, bulk operations, soft delete restoration
 - Association management: Full support for relationship operations with improved type safety
@@ -411,14 +413,14 @@ BaseControllerModule.forEntity({
   prefix: 'users',
   tagName: 'Users',
   permissions: {
-    list: true,    // Allow list queries
-    count: true,   // Allow count statistics
-    get: true,     // Allow single queries
+    list: true, // Allow list queries
+    count: true, // Allow count statistics
+    get: true, // Allow single queries
     create: false, // Disable creation
-    update: true,  // Allow updates
-    delete: false  // Disable deletion
-  }
-})
+    update: true, // Allow updates
+    delete: false, // Disable deletion
+  },
+});
 ```
 
 ## Swagger Documentation
