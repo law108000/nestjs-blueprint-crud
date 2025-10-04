@@ -84,7 +84,7 @@ export class BaseController<T extends BaseEntity> {
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post()
-  @HttpCode(201)
+  @HttpCode(200)
   @ApiOperation({ summary: 'Create new entity' })
   @ApiResponse({ status: 200, description: 'Entity created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
@@ -117,7 +117,7 @@ export class BaseController<T extends BaseEntity> {
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('bulk')
-  @HttpCode(201)
+  @HttpCode(200)
   @ApiOperation({ summary: 'Create multiple entities' })
   @ApiResponse({ status: 200, description: 'Entities created successfully', isArray: true })
   async bulkCreate(@Body() entities: CreateRequestDto[]): Promise<T[]> {

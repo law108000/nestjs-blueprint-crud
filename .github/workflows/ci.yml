@@ -36,6 +36,10 @@ jobs:
     - name: Run test coverage
       run: npm run test:coverage
 
+    - name: Run e2e tests
+      if: matrix.node-version == '20.x'
+      run: npm run test:e2e
+
     - name: Build project
       run: npm run build
 
