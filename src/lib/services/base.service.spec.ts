@@ -1,8 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
-import { BaseService } from './base.service';
+import { CrudService } from './base.service';
 
-describe('BaseService', () => {
-  let service: BaseService<any>;
+describe('CrudService', () => {
+  let service: CrudService<any>;
   let mockRepository: any;
   let mockWaterlineQueryService: any;
 
@@ -29,7 +29,7 @@ describe('BaseService', () => {
       countWithModifiers: jest.fn().mockResolvedValue(0),
     };
 
-    service = new BaseService(mockWaterlineQueryService);
+    service = new CrudService(mockWaterlineQueryService);
   });
 
   describe('find', () => {

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { plainToInstance, instanceToPlain } from 'class-transformer';
-import { BaseEntity } from '../entities/base.entity';
+import { CrudEntity } from '../entities/base.entity';
 import {
   QueryProperty,
   getQueryPropertyMetadata,
@@ -16,7 +16,7 @@ import {
   generateSwaggerRecordDtoForEntity,
 } from './serialize-property.decorator';
 
-class DecoratedEntity extends BaseEntity {
+class DecoratedEntity extends CrudEntity {
   name!: string;
   relationId!: number;
   createdAtIso!: Date;

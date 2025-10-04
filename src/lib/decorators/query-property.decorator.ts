@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { ApiPropertyOptional, PickType, type ApiPropertyOptions } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsOptional } from 'class-validator';
-import { BaseEntity } from '../entities/base.entity';
+import { CrudEntity } from '../entities/base.entity';
 import {
   IQueryCriteria,
   type IListQueryDto,
@@ -27,13 +27,13 @@ export type QueryPropertyOptions = ApiPropertyOptions & {
 } & ({ isEntity: true; entityName: string } | { isEntity?: false | undefined });
 
 export function QueryProperty(options: QueryPropertyOptions) {
-  return function (target: BaseEntity, propertyKey: string) {
+  return function (target: CrudEntity, propertyKey: string) {
     const metadataKey = `${propertyKey}@${QUERY_PROPERTY_METADATA_KEY}`;
     Reflect.defineMetadata(metadataKey, options, target);
   };
 }
 
-export function getQueryPropertyMetadata(target: BaseEntity, propertyKey: string) {
+export function getQueryPropertyMetadata(target: CrudEntity, propertyKey: string) {
   const metadataKey = `${propertyKey}@${QUERY_PROPERTY_METADATA_KEY}`;
   return Reflect.getMetadata(metadataKey, target);
 }
@@ -98,7 +98,7 @@ export type KeyOfType<Type, ValueType> = keyof {
   [Key in keyof Type as Type[Key] extends ValueType ? Key : never]: any;
 };
 
-export function generateSwaggerQueryDtoForEntity<T extends BaseEntity>(
+export function generateSwaggerQueryDtoForEntity<T extends CrudEntity>(
   target: new () => T,
 ): {
   QueryCriteria: new () => IQueryCriteria;
@@ -135,13 +135,13 @@ export function generateSwaggerQueryDtoForEntity<T extends BaseEntity>(
     const { isEntity } = metadata;
     const originalType = Reflect.getMetadata('design:type', target.prototype, propertyKey);
     const originalTypeName = originalType?.name?.toLowerCase();
-    const isTenantBaseEntity = originalType?.prototype instanceof BaseEntity;
+    const isTenantCrudEntity = originalType?.prototype instanceof CrudEntity;
     const isEnum = !!metadata.enum;
 
     Expose()(QueryCriteria.prototype, propertyKey);
     IsOptional()(QueryCriteria.prototype, propertyKey);
 
-    if (isTenantBaseEntity || isEntity) {
+    if (isTenantCrudEntity || isEntity) {
       ApiWhereCriteriaOptional({
         ...metadata,
         type: 'number',

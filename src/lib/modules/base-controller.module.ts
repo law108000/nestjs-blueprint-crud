@@ -20,10 +20,10 @@ import {
   type DynamicModule,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
-import type { BaseEntity } from '../entities/base.entity';
-import { BaseController } from '../controllers/base.controller';
-import { BaseServiceModule, getBaseServiceInjectToken } from './base-service.module';
-import { BaseService } from '../services/base.service';
+import type { CrudEntity } from '../entities/base.entity';
+import { CrudController } from '../controllers/base.controller';
+import { CrudServiceModule, getCrudServiceInjectToken } from './base-service.module';
+import { CrudService } from '../services/base.service';
 import { generateSwaggerQueryDtoForEntity } from '../decorators/query-property.decorator';
 import { generateSwaggerRecordDtoForEntity } from '../decorators/serialize-property.decorator';
 import { generateSwaggerCreateUpdateDtoForEntity } from '../decorators/create-update-property.decorator';
@@ -36,7 +36,7 @@ import {
 } from '../dtos/query.dto';
 import { ValidateIdPipe } from '../pipes/validate-id.pipe';
 
-export interface BaseControllerConfig<T extends BaseEntity> {
+export interface CrudControllerConfig<T extends CrudEntity> {
   entity: new () => T;
   prefix: string;
   tagName: string;
@@ -55,8 +55,8 @@ export interface BaseControllerConfig<T extends BaseEntity> {
 }
 
 @Module({})
-export class BaseControllerModule {
-  static forEntity<T extends BaseEntity>(config: BaseControllerConfig<T>): DynamicModule {
+export class CrudControllerModule {
+  static forEntity<T extends CrudEntity>(config: CrudControllerConfig<T>): DynamicModule {
     const { entity, prefix, tagName, permissions = {}, dtos } = config;
     const {
       list = true,
@@ -71,23 +71,23 @@ export class BaseControllerModule {
     const { CountQueryDto, ListQueryDto } = generateSwaggerQueryDtoForEntity(config.entity);
     const { CreateDto, UpdateDto } = generateSwaggerCreateUpdateDtoForEntity(config.entity);
     const RecordDto = generateSwaggerRecordDtoForEntity(config.entity);
-    const baseServiceModule = BaseServiceModule.forEntity(entity);
+    const crudServiceModule = CrudServiceModule.forEntity(entity);
     const toArray = <V>(value?: V | V[]): V[] => {
       if (!value) {
         return [];
       }
       return Array.isArray(value) ? value : [value];
     };
-    const baseServiceImports = toArray(baseServiceModule.imports);
-    const baseServiceProviders = toArray(baseServiceModule.providers);
-    const baseServiceExports = toArray(baseServiceModule.exports);
+    const crudServiceImports = toArray(crudServiceModule.imports);
+    const crudServiceProviders = toArray(crudServiceModule.providers);
+    const crudServiceExports = toArray(crudServiceModule.exports);
 
     @Controller({ path: prefix })
     @ApiTags(tagName)
-    class DynamicBaseController extends BaseController<T> {
+    class DynamicCrudController extends CrudController<T> {
       constructor(
-        @Inject(getBaseServiceInjectToken(entity))
-        service: BaseService<T>,
+        @Inject(getCrudServiceInjectToken(entity))
+        service: CrudService<T>,
       ) {
         super(service);
       }
@@ -202,18 +202,18 @@ export class BaseControllerModule {
     }
 
     return {
-      module: BaseControllerModule,
-      imports: baseServiceImports,
+      module: CrudControllerModule,
+      imports: crudServiceImports,
       providers: [
-        ...baseServiceProviders,
+        ...crudServiceProviders,
         {
-          provide: `${entity.name}BaseController`,
-          useFactory: service => new DynamicBaseController(service),
-          inject: [getBaseServiceInjectToken(entity)],
+          provide: `${entity.name}CrudController`,
+          useFactory: service => new DynamicCrudController(service),
+          inject: [getCrudServiceInjectToken(entity)],
         },
       ],
-      exports: [...baseServiceExports, `${entity.name}BaseController`],
-      controllers: [DynamicBaseController],
+      exports: [...crudServiceExports, `${entity.name}CrudController`],
+      controllers: [DynamicCrudController],
     };
   }
 }

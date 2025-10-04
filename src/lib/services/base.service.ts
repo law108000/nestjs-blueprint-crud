@@ -1,14 +1,14 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { In, type Repository, type FindOptionsWhere } from 'typeorm';
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import type { BaseEntity } from '../entities/base.entity';
+import type { CrudEntity } from '../entities/base.entity';
 import { WaterlineQueryService } from './waterline-query.service';
 import type { Criteria } from '../interfaces/crud.interfaces';
 
 @Injectable()
-export class BaseService<T extends BaseEntity> {
+export class CrudService<T extends CrudEntity> {
   private repository: Repository<T>;
-  protected readonly logger = new Logger(BaseService.name);
+  protected readonly logger = new Logger(CrudService.name);
 
   constructor(private readonly waterlineQueryService: WaterlineQueryService<T>) {
     this.repository = waterlineQueryService.getRepository();

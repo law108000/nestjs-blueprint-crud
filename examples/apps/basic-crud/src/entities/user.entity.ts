@@ -1,6 +1,6 @@
 import { Entity, Column, OneToMany } from 'typeorm';
 import {
-  BaseEntity,
+  CrudEntity,
   CreateProperty,
   UpdateProperty,
   QueryProperty,
@@ -9,7 +9,7 @@ import {
 import { Order } from './order.entity';
 
 @Entity('users')
-export class User extends BaseEntity {
+export class User extends CrudEntity {
   @Column()
   @CreateProperty({
     description: 'User name',

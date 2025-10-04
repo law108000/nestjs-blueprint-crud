@@ -13,8 +13,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
-import { BaseService } from '../services/base.service';
-import type { BaseEntity } from '../entities/base.entity';
+import { CrudService } from '../services/base.service';
+import type { CrudEntity } from '../entities/base.entity';
 import { ValidateIdPipe } from '../pipes/validate-id.pipe';
 import {
   ListQueryParamsRequestDto,
@@ -25,10 +25,10 @@ import {
 } from '../dtos/query.dto';
 
 @Controller()
-export class BaseController<T extends BaseEntity> {
-  protected readonly logger = new Logger(BaseController.name);
+export class CrudController<T extends CrudEntity> {
+  protected readonly logger = new Logger(CrudController.name);
 
-  constructor(protected readonly baseService: BaseService<T>) {}
+  constructor(protected readonly crudService: CrudService<T>) {}
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
@@ -47,7 +47,7 @@ export class BaseController<T extends BaseEntity> {
       populate,
     };
 
-    return this.baseService.find(criteria);
+    return this.crudService.find(criteria);
   }
 
   @Get('count')
@@ -64,7 +64,7 @@ export class BaseController<T extends BaseEntity> {
       where: where ? JSON.parse(where) : undefined,
     };
 
-    const count = await this.baseService.count(criteria);
+    const count = await this.crudService.count(criteria);
     return { count };
   }
 
@@ -79,7 +79,7 @@ export class BaseController<T extends BaseEntity> {
     @Query() query: GetQueryParamsRequestDto,
   ): Promise<T> {
     const { select, omit, populate } = query;
-    return this.baseService.findOne(id, populate, select, omit);
+    return this.crudService.findOne(id, populate, select, omit);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -89,7 +89,7 @@ export class BaseController<T extends BaseEntity> {
   @ApiResponse({ status: 200, description: 'Entity created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   async create(@Body() entity: CreateRequestDto): Promise<T> {
-    return this.baseService.create(entity as Partial<T>);
+    return this.crudService.create(entity as Partial<T>);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -102,7 +102,7 @@ export class BaseController<T extends BaseEntity> {
     @Param('id', ValidateIdPipe) id: number,
     @Body() entity: UpdateRequestDto,
   ): Promise<T> {
-    return this.baseService.update(id, entity as Partial<T>);
+    return this.crudService.update(id, entity as Partial<T>);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -112,7 +112,7 @@ export class BaseController<T extends BaseEntity> {
   @ApiResponse({ status: 200, description: 'Entity deleted successfully' })
   @ApiResponse({ status: 404, description: 'Entity not found' })
   async remove(@Param('id', ValidateIdPipe) id: number): Promise<T> {
-    return this.baseService.remove(id);
+    return this.crudService.remove(id);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -121,7 +121,7 @@ export class BaseController<T extends BaseEntity> {
   @ApiOperation({ summary: 'Create multiple entities' })
   @ApiResponse({ status: 200, description: 'Entities created successfully', isArray: true })
   async bulkCreate(@Body() entities: CreateRequestDto[]): Promise<T[]> {
-    return this.baseService.bulkCreate(entities as Partial<T>[]);
+    return this.crudService.bulkCreate(entities as Partial<T>[]);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -130,7 +130,7 @@ export class BaseController<T extends BaseEntity> {
   @ApiResponse({ status: 200, description: 'Entities updated successfully', isArray: true })
   async bulkUpdate(@Query('ids') ids: string, @Body() entity: UpdateRequestDto): Promise<T[]> {
     const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
-    return this.baseService.bulkUpdate(idArray, entity as Partial<T>);
+    return this.crudService.bulkUpdate(idArray, entity as Partial<T>);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -139,7 +139,7 @@ export class BaseController<T extends BaseEntity> {
   @ApiResponse({ status: 200, description: 'Entities deleted successfully', isArray: true })
   async bulkRemove(@Query('ids') ids: string): Promise<T[]> {
     const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
-    return this.baseService.bulkRemove(idArray);
+    return this.crudService.bulkRemove(idArray);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -149,6 +149,6 @@ export class BaseController<T extends BaseEntity> {
   @ApiParam({ name: 'id', type: 'number', description: 'Entity ID' })
   @ApiResponse({ status: 200, description: 'Entity restored successfully' })
   async restore(@Param('id', ValidateIdPipe) id: number): Promise<T> {
-    return this.baseService.restore(id);
+    return this.crudService.restore(id);
   }
 }

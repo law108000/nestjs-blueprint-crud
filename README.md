@@ -69,7 +69,7 @@ Follow the steps in [Installation](#installation) to add the package and require
 ```typescript
 import { Entity, Column } from 'typeorm';
 import {
-  BaseEntity,
+  CrudEntity,
   CreateProperty,
   UpdateProperty,
   QueryProperty,
@@ -77,7 +77,7 @@ import {
 } from 'nestjs-blueprint-crud';
 
 @Entity()
-export class User extends BaseEntity {
+export class User extends CrudEntity {
   @Column()
   @CreateProperty({ description: 'User name' })
   @UpdateProperty({ description: 'User name' })
@@ -103,7 +103,7 @@ export class User extends BaseEntity {
 
 ### 3. Provide a database connection
 
-`BaseControllerModule` and `WaterlineQueryModule` resolve their repositories through a shared `DATABASE_CONNECTION` token. Expose it once at the application boundary and reuse it everywhere:
+`CrudControllerModule` and `WaterlineQueryModule` resolve their repositories through a shared `DATABASE_CONNECTION` token. Expose it once at the application boundary and reuse it everywhere:
 
 ```typescript
 import { Global, Module } from '@nestjs/common';
@@ -141,7 +141,7 @@ export class DatabaseModule {}
 ```typescript
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BaseControllerModule } from 'nestjs-blueprint-crud';
+import { CrudControllerModule } from 'nestjs-blueprint-crud';
 import { DatabaseModule } from '../database.module';
 import { User } from './user.entity';
 
@@ -149,7 +149,7 @@ import { User } from './user.entity';
   imports: [
     DatabaseModule,
     TypeOrmModule.forFeature([User]),
-    BaseControllerModule.forEntity({
+    CrudControllerModule.forEntity({
       entity: User,
       prefix: 'users',
       tagName: 'Users',
@@ -258,17 +258,17 @@ Supports rich operators and logical groupings:
 
 ```typescript
 @Entity()
-export class User extends BaseEntity {
+export class User extends CrudEntity {
   @OneToMany(() => Order, order => order.user)
   @SerializeProperty({ isEntity: true, entityName: 'Order' })
   orders: Order[];
 }
 
 @Entity()
-export class Order extends BaseEntity {
+export class Order extends CrudEntity {
   @ManyToOne(() => User, user => user.orders)
-  @CreateProperty({ isTenantBaseEntity: true })
-  @UpdateProperty({ isTenantBaseEntity: true })
+  @CreateProperty({ isTenantCrudEntity: true })
+  @UpdateProperty({ isTenantCrudEntity: true })
   @QueryProperty({ isEntity: true, entityName: 'User' })
   @SerializeProperty({ isEntity: true, entityName: 'User' })
   user: User;
@@ -280,8 +280,8 @@ export class Order extends BaseEntity {
 ```typescript
 import { Controller, Module } from '@nestjs/common';
 import {
-  BaseAssociationController,
-  BaseAssociationService,
+  CrudAssociationController,
+  CrudAssociationService,
   WaterlineQueryModule,
   WaterlineQueryService,
   getWaterlineQueryServiceInjectToken,
@@ -291,9 +291,9 @@ import { User } from './user.entity';
 import { Order } from './order.entity';
 
 @Controller('users')
-class UserOrdersController extends BaseAssociationController<User, Order> {
-  constructor(baseAssociationService: BaseAssociationService<User, Order>) {
-    super(baseAssociationService, 'orders');
+class UserOrdersController extends CrudAssociationController<User, Order> {
+  constructor(crudAssociationService: CrudAssociationService<User, Order>) {
+    super(crudAssociationService, 'orders');
   }
 }
 
@@ -306,11 +306,11 @@ class UserOrdersController extends BaseAssociationController<User, Order> {
   controllers: [UserOrdersController],
   providers: [
     {
-      provide: BaseAssociationService,
+      provide: CrudAssociationService,
       useFactory: (
         userQuery: WaterlineQueryService<User>,
         orderQuery: WaterlineQueryService<Order>,
-      ) => new BaseAssociationService(userQuery, orderQuery),
+      ) => new CrudAssociationService(userQuery, orderQuery),
       inject: [
         getWaterlineQueryServiceInjectToken(User),
         getWaterlineQueryServiceInjectToken(Order),
@@ -368,24 +368,24 @@ If you need custom business logic, inject the generated base service and compose
 
 ```typescript
 import { Inject, Injectable } from '@nestjs/common';
-import { BaseService, getBaseServiceInjectToken } from 'nestjs-blueprint-crud';
+import { CrudService, getCrudServiceInjectToken } from 'nestjs-blueprint-crud';
 import { User } from './user.entity';
 
 @Injectable()
 export class UserService {
   constructor(
-    @Inject(getBaseServiceInjectToken(User))
-    private readonly baseService: BaseService<User>,
+    @Inject(getCrudServiceInjectToken(User))
+    private readonly crudService: CrudService<User>,
   ) {}
 
   async findActiveUsers(): Promise<User[]> {
-    return this.baseService.find({
+    return this.crudService.find({
       where: { status: 'active' },
     });
   }
 
   async promoteToAdmin(userId: number): Promise<User> {
-    return this.baseService.update(userId, { role: 'admin' });
+    return this.crudService.update(userId, { role: 'admin' });
   }
 }
 ```
@@ -395,7 +395,7 @@ export class UserService {
 You can control permissions for each operation at a granular level:
 
 ```typescript
-BaseControllerModule.forEntity({
+CrudControllerModule.forEntity({
   entity: User,
   prefix: 'users',
   tagName: 'Users',

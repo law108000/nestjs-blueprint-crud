@@ -1,31 +1,31 @@
 import { Module, type DynamicModule } from '@nestjs/common';
-import type { BaseEntity } from '../entities/base.entity';
-import { BaseService } from '../services/base.service';
+import type { CrudEntity } from '../entities/base.entity';
+import { CrudService } from '../services/base.service';
 import {
   getWaterlineQueryServiceInjectToken,
   WaterlineQueryModule,
 } from './waterline-query.module';
 
-export function getBaseServiceInjectToken<T extends BaseEntity>(entity: new () => T): string {
-  return `${entity.name}BaseService`;
+export function getCrudServiceInjectToken<T extends CrudEntity>(entity: new () => T): string {
+  return `${entity.name}CrudService`;
 }
 
 @Module({})
-export class BaseServiceModule {
-  static forEntity<T extends BaseEntity>(entity: new () => T): DynamicModule {
+export class CrudServiceModule {
+  static forEntity<T extends CrudEntity>(entity: new () => T): DynamicModule {
     return {
-      module: BaseServiceModule,
+      module: CrudServiceModule,
       imports: [WaterlineQueryModule.forEntity(entity)],
       providers: [
         {
-          provide: `${entity.name}BaseService`,
+          provide: `${entity.name}CrudService`,
           useFactory: waterlineQueryService => {
-            return new BaseService<T>(waterlineQueryService);
+            return new CrudService<T>(waterlineQueryService);
           },
           inject: [getWaterlineQueryServiceInjectToken(entity)],
         },
       ],
-      exports: [getBaseServiceInjectToken(entity)],
+      exports: [getCrudServiceInjectToken(entity)],
     };
   }
 }

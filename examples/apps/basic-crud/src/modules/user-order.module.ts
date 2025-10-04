@@ -1,8 +1,8 @@
 import { Module, Controller } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
-  BaseAssociationController,
-  BaseAssociationService,
+  CrudAssociationController,
+  CrudAssociationService,
   WaterlineQueryModule,
   WaterlineQueryService,
   getWaterlineQueryServiceInjectToken,
@@ -11,8 +11,8 @@ import { User } from '../entities/user.entity';
 import { Order } from '../entities/order.entity';
 
 @Controller('users')
-class UserOrdersController extends BaseAssociationController<User, Order> {
-  constructor(baseAssociationService: BaseAssociationService<User, Order>) {
+class UserOrdersController extends CrudAssociationController<User, Order> {
+  constructor(baseAssociationService: CrudAssociationService<User, Order>) {
     super(baseAssociationService, 'orders');
   }
 }
@@ -26,11 +26,11 @@ class UserOrdersController extends BaseAssociationController<User, Order> {
   controllers: [UserOrdersController],
   providers: [
     {
-      provide: BaseAssociationService,
+      provide: CrudAssociationService,
       useFactory: (
         userWaterlineQueryService: WaterlineQueryService<User>,
         orderWaterlineQueryService: WaterlineQueryService<Order>,
-      ) => new BaseAssociationService(userWaterlineQueryService, orderWaterlineQueryService),
+      ) => new CrudAssociationService(userWaterlineQueryService, orderWaterlineQueryService),
       inject: [
         getWaterlineQueryServiceInjectToken(User),
         getWaterlineQueryServiceInjectToken(Order),

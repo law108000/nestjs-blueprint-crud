@@ -1,9 +1,9 @@
-import { BaseAssociationController } from './base-association.controller';
-import type { BaseAssociationService } from '../services/base-association.service';
+import { CrudAssociationController } from './base-association.controller';
+import type { CrudAssociationService } from '../services/base-association.service';
 
-describe('BaseAssociationController', () => {
-  let controller: BaseAssociationController<any, any>;
-  let service: jest.Mocked<BaseAssociationService<any, any>>;
+describe('CrudAssociationController', () => {
+  let controller: CrudAssociationController<any, any>;
+  let service: jest.Mocked<CrudAssociationService<any, any>>;
 
   beforeEach(() => {
     service = {
@@ -12,9 +12,9 @@ describe('BaseAssociationController', () => {
       addAssociation: jest.fn(),
       replaceAssociations: jest.fn(),
       removeAssociation: jest.fn(),
-    } as unknown as jest.Mocked<BaseAssociationService<any, any>>;
+    } as unknown as jest.Mocked<CrudAssociationService<any, any>>;
 
-    controller = new BaseAssociationController(service, 'children');
+    controller = new CrudAssociationController(service, 'children');
   });
 
   it('should delegate find queries with parsed criteria', async () => {

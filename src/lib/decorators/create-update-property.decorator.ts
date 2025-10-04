@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { ApiPropertyOptional, PickType, type ApiPropertyOptions } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsOptional } from 'class-validator';
-import { BaseEntity } from '../entities/base.entity';
+import { CrudEntity } from '../entities/base.entity';
 
 const CREATE_PROPERTY_METADATA_KEY = 'CREATE_PROPERTY_METADATA_KEY';
 const UPDATE_PROPERTY_METADATA_KEY = 'UPDATE_PROPERTY_METADATA_KEY';
@@ -28,21 +28,21 @@ export type CreateUpdatePropertyOptions = ApiPropertyOptions & {
 };
 
 export function CreateProperty(options: CreateUpdatePropertyOptions = {}) {
-  return function (target: BaseEntity, propertyKey: string) {
+  return function (target: CrudEntity, propertyKey: string) {
     const metadataKey = `${propertyKey}@${CREATE_PROPERTY_METADATA_KEY}`;
     Reflect.defineMetadata(metadataKey, options, target);
   };
 }
 
 export function UpdateProperty(options: CreateUpdatePropertyOptions = {}) {
-  return function (target: BaseEntity, propertyKey: string) {
+  return function (target: CrudEntity, propertyKey: string) {
     const metadataKey = `${propertyKey}@${UPDATE_PROPERTY_METADATA_KEY}`;
     Reflect.defineMetadata(metadataKey, options, target);
   };
 }
 
 type ApiCreateUpdatePropertyOptions = ApiPropertyOptions & {
-  isTenantBaseEntity?: boolean;
+  isTenantCrudEntity?: boolean;
   isISO8601?: boolean;
   isTimestamp?: boolean;
 };
@@ -50,11 +50,11 @@ type ApiCreateUpdatePropertyOptions = ApiPropertyOptions & {
 export function ApiCreateUpdateOptional(
   options: ApiCreateUpdatePropertyOptions = {},
 ): PropertyDecorator {
-  const { type: originalType, isTenantBaseEntity } = options;
+  const { type: originalType, isTenantCrudEntity } = options;
   if (typeof originalType === 'string') {
     options.type = originalType;
   }
-  if (isTenantBaseEntity) {
+  if (isTenantCrudEntity) {
     options.type = 'number';
   }
   if (!options.type) {
@@ -70,7 +70,7 @@ export function ApiCreateUpdateOptional(
       : `${enumKeyValuePairs.map(v => `- ${v}`).join('\n')}`;
   }
 
-  delete options.isTenantBaseEntity;
+  delete options.isTenantCrudEntity;
   delete options.isISO8601;
   delete options.isTimestamp;
 
@@ -79,18 +79,18 @@ export function ApiCreateUpdateOptional(
   });
 }
 
-export function getCreatePropertyMetadata(target: BaseEntity, propertyKey: string) {
+export function getCreatePropertyMetadata(target: CrudEntity, propertyKey: string) {
   const metadataKey = `${propertyKey}@${CREATE_PROPERTY_METADATA_KEY}`;
   return Reflect.getMetadata(metadataKey, target);
 }
 
-export function getUpdatePropertyMetadata(target: BaseEntity, propertyKey: string) {
+export function getUpdatePropertyMetadata(target: CrudEntity, propertyKey: string) {
   const metadataKey = `${propertyKey}@${UPDATE_PROPERTY_METADATA_KEY}`;
   return Reflect.getMetadata(metadataKey, target);
 }
 
 function generateSwaggerDtoForEntity(
-  target: new () => BaseEntity,
+  target: new () => CrudEntity,
   metaKey: string,
   dtoSuffix: string,
   getMetadata?: (prototype: any, propertyKey: string) => any,
@@ -111,7 +111,7 @@ function generateSwaggerDtoForEntity(
     const { isISO8601, isTimestamp, isEntity } = metadata;
     const originalType = Reflect.getMetadata('design:type', target.prototype, propertyKey);
     const originalTypeName = originalType?.name?.toLowerCase();
-    const isTenantBaseEntity = originalType && originalType.prototype instanceof BaseEntity;
+    const isTenantCrudEntity = originalType && originalType.prototype instanceof CrudEntity;
     const isEnum = !!metadata.enum;
 
     Expose()(Dto.prototype, propertyKey);
@@ -133,11 +133,11 @@ function generateSwaggerDtoForEntity(
       )(Dto.prototype, propertyKey);
     }
 
-    if (isTenantBaseEntity || isEntity) {
+    if (isTenantCrudEntity || isEntity) {
       ApiCreateUpdateOptional({
         ...metadata,
         type: 'number',
-        isTenantBaseEntity: true,
+        isTenantCrudEntity: true,
       })(Dto.prototype, propertyKey);
     } else if (isEnum) {
       ApiCreateUpdateOptional({
@@ -155,7 +155,7 @@ function generateSwaggerDtoForEntity(
   return Dto;
 }
 
-export function generateSwaggerCreateDtoForEntity(target: new () => BaseEntity) {
+export function generateSwaggerCreateDtoForEntity(target: new () => CrudEntity) {
   if (listOfCreateUpdateDto[target.name]) {
     return listOfCreateUpdateDto[target.name].CreateDto;
   }
@@ -167,7 +167,7 @@ export function generateSwaggerCreateDtoForEntity(target: new () => BaseEntity) 
   );
 }
 
-export function generateSwaggerUpdateDtoForEntity<T extends BaseEntity>(target: new () => T) {
+export function generateSwaggerUpdateDtoForEntity<T extends CrudEntity>(target: new () => T) {
   if (listOfCreateUpdateDto[target.name]) {
     return listOfCreateUpdateDto[target.name].UpdateDto;
   }
@@ -179,7 +179,7 @@ export function generateSwaggerUpdateDtoForEntity<T extends BaseEntity>(target: 
   );
 }
 
-export function generateSwaggerCreateUpdateDtoForEntity(target: new () => BaseEntity): {
+export function generateSwaggerCreateUpdateDtoForEntity(target: new () => CrudEntity): {
   CreateDto: new () => ICreateDto;
   UpdateDto: new () => IUpdateDto;
 } {

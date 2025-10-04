@@ -1,18 +1,18 @@
 import 'reflect-metadata';
 import { Module, type DynamicModule } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { BaseEntity } from '../entities/base.entity';
-import { BaseService } from '../services/base.service';
+import { CrudEntity } from '../entities/base.entity';
+import { CrudService } from '../services/base.service';
 import { WaterlineQueryService } from '../services/waterline-query.service';
-import { BaseServiceModule, getBaseServiceInjectToken } from './base-service.module';
+import { CrudServiceModule, getCrudServiceInjectToken } from './base-service.module';
 import {
   WaterlineQueryModule,
   getWaterlineQueryServiceInjectToken,
 } from './waterline-query.module';
-import { BaseControllerModule } from './base-controller.module';
-import { BaseController } from '../controllers/base.controller';
+import { CrudControllerModule } from './base-controller.module';
+import { CrudController } from '../controllers/base.controller';
 
-class ExampleEntity extends BaseEntity {
+class ExampleEntity extends CrudEntity {
   name!: string;
 }
 
@@ -65,17 +65,17 @@ describe('Dynamic modules', () => {
     };
   });
 
-  it('BaseServiceModule.forEntity should provide a BaseService', async () => {
+  it('CrudServiceModule.forEntity should provide a CrudService', async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
         DatabaseTestingModule.withConnection(dataSource),
-        BaseServiceModule.forEntity(ExampleEntity),
+        CrudServiceModule.forEntity(ExampleEntity),
       ],
     }).compile();
 
-    const service = moduleRef.get<BaseService<any>>(getBaseServiceInjectToken(ExampleEntity));
+    const service = moduleRef.get<CrudService<any>>(getCrudServiceInjectToken(ExampleEntity));
 
-    expect(service).toBeInstanceOf(BaseService);
+    expect(service).toBeInstanceOf(CrudService);
     expect(dataSource.getRepository).toHaveBeenCalledWith(ExampleEntity);
 
     await moduleRef.close();
@@ -98,11 +98,11 @@ describe('Dynamic modules', () => {
     await moduleRef.close();
   });
 
-  it('BaseControllerModule.forEntity should wire controller with service', async () => {
+  it('CrudControllerModule.forEntity should wire controller with service', async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
         DatabaseTestingModule.withConnection(dataSource),
-        BaseControllerModule.forEntity({
+        CrudControllerModule.forEntity({
           entity: ExampleEntity,
           prefix: 'examples',
           tagName: 'Examples',
@@ -110,12 +110,12 @@ describe('Dynamic modules', () => {
       ],
     }).compile();
 
-    const service = moduleRef.get<BaseService<any>>(getBaseServiceInjectToken(ExampleEntity));
+    const service = moduleRef.get<CrudService<any>>(getCrudServiceInjectToken(ExampleEntity));
     jest.spyOn(service, 'find').mockResolvedValue([]);
 
-    const controller = moduleRef.get<BaseController<any>>(`${ExampleEntity.name}BaseController`);
+    const controller = moduleRef.get<CrudController<any>>(`${ExampleEntity.name}CrudController`);
 
-    expect(controller).toBeInstanceOf(BaseController);
+    expect(controller).toBeInstanceOf(CrudController);
 
     await controller.find({} as any);
 

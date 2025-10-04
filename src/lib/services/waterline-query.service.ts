@@ -8,10 +8,10 @@ import {
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import type { Criteria, CountCriteria, EntityWhereCriteria } from '../interfaces/crud.interfaces';
-import type { BaseEntity } from '../entities/base.entity';
+import type { CrudEntity } from '../entities/base.entity';
 
 @Injectable()
-export class WaterlineQueryService<T extends BaseEntity> {
+export class WaterlineQueryService<T extends CrudEntity> {
   private readonly logger = new Logger(WaterlineQueryService.name);
   private stringColumnsCache: { [key: string]: boolean } = {};
   private lastExecutedQuery: SelectQueryBuilder<T> | null = null;

@@ -2,16 +2,16 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
 import type { RelationQueryBuilder } from 'typeorm/query-builder/RelationQueryBuilder';
 import type { RelationMetadata } from 'typeorm/metadata/RelationMetadata';
-import type { BaseEntity } from '../entities/base.entity';
+import type { CrudEntity } from '../entities/base.entity';
 import { WaterlineQueryService } from './waterline-query.service';
-import { BaseService } from './base.service';
+import { CrudService } from './base.service';
 import type { Criteria, CountCriteria, EntityWhereCriteria } from '../interfaces/crud.interfaces';
 
 @Injectable()
-export class BaseAssociationService<
-  Parent extends BaseEntity,
-  Child extends BaseEntity,
-> extends BaseService<Parent> {
+export class CrudAssociationService<
+  Parent extends CrudEntity,
+  Child extends CrudEntity,
+> extends CrudService<Parent> {
   private parentRepository: Repository<Parent>;
 
   constructor(

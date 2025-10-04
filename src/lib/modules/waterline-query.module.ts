@@ -1,9 +1,9 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import type { DataSource } from 'typeorm';
-import type { BaseEntity } from '../entities/base.entity';
+import type { CrudEntity } from '../entities/base.entity';
 import { WaterlineQueryService } from '../services/waterline-query.service';
 
-export function getWaterlineQueryServiceInjectToken<T extends BaseEntity>(
+export function getWaterlineQueryServiceInjectToken<T extends CrudEntity>(
   entity: new () => T,
 ): string {
   return `${entity.name}WaterlineQueryService`;
@@ -11,7 +11,7 @@ export function getWaterlineQueryServiceInjectToken<T extends BaseEntity>(
 
 @Module({})
 export class WaterlineQueryModule {
-  static forEntity<T extends BaseEntity>(entity: new () => T): DynamicModule {
+  static forEntity<T extends CrudEntity>(entity: new () => T): DynamicModule {
     return {
       module: WaterlineQueryModule,
       providers: [

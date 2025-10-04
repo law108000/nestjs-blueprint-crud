@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BaseControllerModule } from 'nestjs-blueprint-crud';
+import { CrudControllerModule } from 'nestjs-blueprint-crud';
 import { Order } from '../entities/order.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order]),
-    BaseControllerModule.forEntity({
+    CrudControllerModule.forEntity({
       entity: Order,
       prefix: 'orders',
       tagName: 'Orders',

@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { applyDecorators } from '@nestjs/common';
 import { ApiResponseProperty, PickType, type ApiResponseOptions } from '@nestjs/swagger';
 import { Expose, Transform, Exclude } from 'class-transformer';
-import type { BaseEntity } from '../entities/base.entity';
+import type { CrudEntity } from '../entities/base.entity';
 
 const SERIALIZE_PROPERTY_METADATA_KEY = 'SERIALIZE_PROPERTY_METADATA_KEY';
 
@@ -100,7 +100,7 @@ export function getSerializePropertyMetadata(target: any, propertyKey: string) {
   return Reflect.getMetadata(metadataKey, target);
 }
 
-export function generateSwaggerRecordDtoForEntity(target: new () => BaseEntity) {
+export function generateSwaggerRecordDtoForEntity(target: new () => CrudEntity) {
   if (!target) {
     return null;
   }

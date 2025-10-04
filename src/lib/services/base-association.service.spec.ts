@@ -1,9 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
-import { BaseAssociationService } from './base-association.service';
+import { CrudAssociationService } from './base-association.service';
 import type { Criteria, CountCriteria } from '../interfaces/crud.interfaces';
 
-describe('BaseAssociationService', () => {
-  let service: BaseAssociationService<any, any>;
+describe('CrudAssociationService', () => {
+  let service: CrudAssociationService<any, any>;
   let parentWaterlineQueryService: any;
   let childWaterlineQueryService: any;
   let parentRepository: any;
@@ -68,7 +68,7 @@ describe('BaseAssociationService', () => {
       countWithModifiers: jest.fn(),
     };
 
-    service = new BaseAssociationService(parentWaterlineQueryService, childWaterlineQueryService);
+    service = new CrudAssociationService(parentWaterlineQueryService, childWaterlineQueryService);
   });
 
   describe('addAssociation', () => {

@@ -12,8 +12,8 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
-import { BaseAssociationService } from '../services/base-association.service';
-import type { BaseEntity } from '../entities/base.entity';
+import { CrudAssociationService } from '../services/base-association.service';
+import type { CrudEntity } from '../entities/base.entity';
 import { ValidateIdPipe } from '../pipes/validate-id.pipe';
 import {
   ListQueryParamsRequestDto,
@@ -22,11 +22,11 @@ import {
 } from '../dtos/query.dto';
 
 @Controller()
-export class BaseAssociationController<Parent extends BaseEntity, Child extends BaseEntity> {
-  protected readonly logger = new Logger(BaseAssociationController.name);
+export class CrudAssociationController<Parent extends CrudEntity, Child extends CrudEntity> {
+  protected readonly logger = new Logger(CrudAssociationController.name);
 
   constructor(
-    private readonly baseAssociationService: BaseAssociationService<Parent, Child>,
+    private readonly crudAssociationService: CrudAssociationService<Parent, Child>,
     @Inject('ASSOCIATION_NAME') private readonly association: string,
   ) {}
 
@@ -52,7 +52,7 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
       populate,
     };
 
-    return this.baseAssociationService.findAssociations(id, this.association, criteria);
+    return this.crudAssociationService.findAssociations(id, this.association, criteria);
   }
 
   @Get(':id/:association/count')
@@ -74,7 +74,7 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
       where: where ? JSON.parse(where) : undefined,
     };
 
-    const count = await this.baseAssociationService.countAssociations(
+    const count = await this.crudAssociationService.countAssociations(
       id,
       this.association,
       criteria,
@@ -93,7 +93,7 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
     @Param('id', ValidateIdPipe) id: number,
     @Param('fk', ValidateIdPipe) fk: number,
   ): Promise<Parent> {
-    return this.baseAssociationService.addAssociation(id, this.association, fk);
+    return this.crudAssociationService.addAssociation(id, this.association, fk);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -129,7 +129,7 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
   ): Promise<Parent> {
     const idsPayload = Array.isArray(body) ? body : (body?.ids ?? []);
     const ids = idsPayload.map(value => Number(value)).filter(value => !Number.isNaN(value));
-    return this.baseAssociationService.replaceAssociations(id, this.association, ids);
+    return this.crudAssociationService.replaceAssociations(id, this.association, ids);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -143,6 +143,6 @@ export class BaseAssociationController<Parent extends BaseEntity, Child extends 
     @Param('id', ValidateIdPipe) id: number,
     @Param('fk', ValidateIdPipe) fk: number,
   ): Promise<Parent> {
-    return this.baseAssociationService.removeAssociation(id, this.association, fk);
+    return this.crudAssociationService.removeAssociation(id, this.association, fk);
   }
 }

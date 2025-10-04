@@ -1,9 +1,9 @@
-import { BaseController } from './base.controller';
-import type { BaseService } from '../services/base.service';
+import { CrudController } from './base.controller';
+import type { CrudService } from '../services/base.service';
 
-describe('BaseController', () => {
-  let controller: BaseController<any>;
-  let service: jest.Mocked<BaseService<any>>;
+describe('CrudController', () => {
+  let controller: CrudController<any>;
+  let service: jest.Mocked<CrudService<any>>;
 
   beforeEach(() => {
     service = {
@@ -17,9 +17,9 @@ describe('BaseController', () => {
       bulkUpdate: jest.fn(),
       bulkRemove: jest.fn(),
       restore: jest.fn(),
-    } as unknown as jest.Mocked<BaseService<any>>;
+    } as unknown as jest.Mocked<CrudService<any>>;
 
-    controller = new BaseController(service);
+    controller = new CrudController(service);
   });
 
   it('should delegate list queries to the service with parsed criteria', async () => {

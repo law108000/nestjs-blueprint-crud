@@ -85,7 +85,7 @@ export class IntTransformer implements ValueTransformer {
 /**
  * Base entity class providing common fields and functionality for all entities
  */
-export abstract class BaseEntity {
+export abstract class CrudEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
