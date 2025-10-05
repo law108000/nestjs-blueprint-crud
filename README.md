@@ -1,5 +1,13 @@
 # nestjs-blueprint-crud
 
+<div align="center">
+  <a href="https://www.npmjs.com/package/nestjs-blueprint-crud"><img src="https://img.shields.io/npm/v/nestjs-blueprint-crud" alt="NPM Version" /></a>
+  <a href="https://www.npmjs.com/package/nestjs-blueprint-crud"><img src="https://img.shields.io/npm/dm/nestjs-blueprint-crud" alt="NPM Downloads" /></a>
+  <a href="https://github.com/law108000/nestjs-blueprint-crud/actions/workflows/ci.yml"><img src="https://github.com/law108000/nestjs-blueprint-crud/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://codecov.io/gh/law108000/nestjs-blueprint-crud"><img src="https://codecov.io/gh/law108000/nestjs-blueprint-crud/branch/main/graph/badge.svg" alt="Coverage" /></a>
+  <a href="https://github.com/law108000/nestjs-blueprint-crud/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-teal.svg" alt="MIT License" /></a>
+</div>
+
 A comprehensive NestJS library for automatic CRUD operations with TypeORM, complex queries, and entity associations.
 
 ## Inspiration
