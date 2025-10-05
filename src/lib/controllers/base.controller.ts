@@ -1,5 +1,4 @@
 import {
-  Controller,
   Get,
   Post,
   Patch,
@@ -13,7 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
-import { CrudService } from '../services/base.service';
+import type { CrudService } from '../services/base.service';
 import type { CrudEntity } from '../entities/base.entity';
 import { ValidateIdPipe } from '../pipes/validate-id.pipe';
 import {
@@ -24,7 +23,6 @@ import {
   UpdateRequestDto,
 } from '../dtos/query.dto';
 
-@Controller()
 export class CrudController<T extends CrudEntity> {
   protected readonly logger = new Logger(CrudController.name);
 
@@ -93,6 +91,38 @@ export class CrudController<T extends CrudEntity> {
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
+  @Post('bulk')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Create multiple entities' })
+  @ApiResponse({ status: 200, description: 'Entities created successfully', isArray: true })
+  async bulkCreate(@Body() entities: CreateRequestDto[]): Promise<T[]> {
+    return this.crudService.bulkCreate(entities as Partial<T>[]);
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Patch('bulk')
+  @ApiOperation({ summary: 'Update multiple entities' })
+  @ApiResponse({ status: 200, description: 'Entities updated successfully', isArray: true })
+  async bulkUpdate(
+    @Query() query: Record<string, string>,
+    @Body() entity: UpdateRequestDto,
+  ): Promise<T[]> {
+    const { ids } = query;
+    const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
+    return this.crudService.bulkUpdate(idArray, entity as Partial<T>);
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Delete('bulk')
+  @ApiOperation({ summary: 'Delete multiple entities' })
+  @ApiResponse({ status: 200, description: 'Entities deleted successfully', isArray: true })
+  async bulkRemove(@Query() query: Record<string, string>): Promise<T[]> {
+    const { ids } = query;
+    const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
+    return this.crudService.bulkRemove(idArray);
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
   @Patch(':id')
   @ApiOperation({ summary: 'Update entity' })
   @ApiParam({ name: 'id', type: 'number', description: 'Entity ID' })
@@ -113,33 +143,6 @@ export class CrudController<T extends CrudEntity> {
   @ApiResponse({ status: 404, description: 'Entity not found' })
   async remove(@Param('id', ValidateIdPipe) id: number): Promise<T> {
     return this.crudService.remove(id);
-  }
-
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Post('bulk')
-  @HttpCode(200)
-  @ApiOperation({ summary: 'Create multiple entities' })
-  @ApiResponse({ status: 200, description: 'Entities created successfully', isArray: true })
-  async bulkCreate(@Body() entities: CreateRequestDto[]): Promise<T[]> {
-    return this.crudService.bulkCreate(entities as Partial<T>[]);
-  }
-
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Patch('bulk')
-  @ApiOperation({ summary: 'Update multiple entities' })
-  @ApiResponse({ status: 200, description: 'Entities updated successfully', isArray: true })
-  async bulkUpdate(@Query('ids') ids: string, @Body() entity: UpdateRequestDto): Promise<T[]> {
-    const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
-    return this.crudService.bulkUpdate(idArray, entity as Partial<T>);
-  }
-
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Delete('bulk')
-  @ApiOperation({ summary: 'Delete multiple entities' })
-  @ApiResponse({ status: 200, description: 'Entities deleted successfully', isArray: true })
-  async bulkRemove(@Query('ids') ids: string): Promise<T[]> {
-    const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
-    return this.crudService.bulkRemove(idArray);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)

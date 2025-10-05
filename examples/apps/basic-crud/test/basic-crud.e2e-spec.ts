@@ -78,6 +78,10 @@ describe('Basic CRUD example (e2e)', () => {
     const updatedResponse = await request(context.httpServer).get(`/users/${userId}`).expect(200);
 
     expect(updatedResponse.body.status).toBe('inactive');
+
+    await request(context.httpServer).delete(`/users/${userId}`).expect(200);
+
+    await request(context.httpServer).get(`/users/${userId}`).expect(404);
   });
 
   it('manages orders and associations for users', async () => {
@@ -230,7 +234,7 @@ describe('Basic CRUD example (e2e)', () => {
     expect(detachedOrder.body.userId).toBeNull();
   });
 
-  it.skip('supports bulk workflows and soft deletes for users', async () => {
+  it('supports bulk workflows and soft deletes for users', async () => {
     const bulkCreateResponse = await request(context.httpServer)
       .post('/users/bulk')
       .send([
@@ -253,7 +257,7 @@ describe('Basic CRUD example (e2e)', () => {
           status: 'suspended',
         },
       ])
-      .expect(201);
+      .expect(200);
 
     const createdUsers = bulkCreateResponse.body as UserResponse[];
     expect(createdUsers).toHaveLength(3);

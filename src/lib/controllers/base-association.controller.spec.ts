@@ -85,4 +85,52 @@ describe('CrudAssociationController', () => {
     expect(service.removeAssociation).toHaveBeenCalledWith(2, 'children', 9);
     expect(result).toBe(parent);
   });
+
+  it('should handle replace associations with array input', async () => {
+    const parent = { id: 1 };
+    service.replaceAssociations.mockResolvedValue(parent);
+
+    const result = await controller.replaceAssociations(1, [10, 11] as any);
+
+    expect(service.replaceAssociations).toHaveBeenCalledWith(1, 'children', [10, 11]);
+    expect(result).toBe(parent);
+  });
+
+  it('should handle replace associations with empty ids', async () => {
+    const parent = { id: 1 };
+    service.replaceAssociations.mockResolvedValue(parent);
+
+    const result = await controller.replaceAssociations(1, {} as any);
+
+    expect(service.replaceAssociations).toHaveBeenCalledWith(1, 'children', []);
+    expect(result).toBe(parent);
+  });
+
+  it('should handle find associations with array sort syntax', async () => {
+    const expected = [{ id: 1 }];
+    service.findAssociations.mockResolvedValue(expected);
+
+    const result = await controller.findAssociations(5, {
+      sort: 'name ASC, createdAt DESC',
+    } as any);
+
+    expect(service.findAssociations).toHaveBeenCalledWith(5, 'children', {
+      sort: 'name ASC, createdAt DESC',
+    });
+    expect(result).toEqual(expected);
+  });
+
+  it('should handle find associations with populate array', async () => {
+    const expected = [{ id: 1 }];
+    service.findAssociations.mockResolvedValue(expected);
+
+    const result = await controller.findAssociations(5, {
+      populate: 'parent,children',
+    } as any);
+
+    expect(service.findAssociations).toHaveBeenCalledWith(5, 'children', {
+      populate: 'parent,children',
+    });
+    expect(result).toEqual(expected);
+  });
 });

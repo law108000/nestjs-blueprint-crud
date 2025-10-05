@@ -113,7 +113,7 @@ describe('CrudController', () => {
     const dto = { name: 'Updated' };
     service.bulkUpdate.mockResolvedValue([{ id: 1, name: 'Updated' }]);
 
-    const result = await controller.bulkUpdate('1, 2,3', dto as any);
+    const result = await controller.bulkUpdate({ ids: '1, 2,3' }, dto as any);
 
     expect(service.bulkUpdate).toHaveBeenCalledWith([1, 2, 3], dto);
     expect(result).toEqual([{ id: 1, name: 'Updated' }]);
@@ -123,7 +123,7 @@ describe('CrudController', () => {
     const removed = [{ id: 1 }, { id: 2 }];
     service.bulkRemove.mockResolvedValue(removed);
 
-    const result = await controller.bulkRemove('1,2');
+    const result = await controller.bulkRemove({ ids: '1,2' });
 
     expect(service.bulkRemove).toHaveBeenCalledWith([1, 2]);
     expect(result).toEqual(removed);
@@ -137,5 +137,99 @@ describe('CrudController', () => {
 
     expect(service.restore).toHaveBeenCalledWith(3);
     expect(result).toBe(entity);
+  });
+
+  describe('query parameter edge cases', () => {
+    it('should handle empty where parameter', async () => {
+      const query = {
+        where: '',
+        limit: 5,
+      } as any;
+
+      await controller.find(query);
+
+      expect(service.find).toHaveBeenCalledWith({
+        where: undefined,
+        limit: 5,
+        skip: undefined,
+        sort: undefined,
+        select: undefined,
+        omit: undefined,
+        populate: undefined,
+      });
+    });
+
+    it('should handle limit of 0', async () => {
+      const query = {
+        limit: 0,
+      } as any;
+
+      await controller.find(query);
+
+      expect(service.find).toHaveBeenCalledWith({
+        where: undefined,
+        limit: 0,
+        skip: undefined,
+        sort: undefined,
+        select: undefined,
+        omit: undefined,
+        populate: undefined,
+      });
+    });
+
+    it('should handle negative limit gracefully', async () => {
+      const query = {
+        limit: -1,
+      } as any;
+
+      await controller.find(query);
+
+      expect(service.find).toHaveBeenCalledWith({
+        where: undefined,
+        limit: -1,
+        skip: undefined,
+        sort: undefined,
+        select: undefined,
+        omit: undefined,
+        populate: undefined,
+      });
+    });
+
+    it('should handle complex sort syntax', async () => {
+      const query = {
+        sort: 'name ASC, age DESC',
+      } as any;
+
+      await controller.find(query);
+
+      expect(service.find).toHaveBeenCalledWith({
+        where: undefined,
+        limit: undefined,
+        skip: undefined,
+        sort: 'name ASC, age DESC',
+        select: undefined,
+        omit: undefined,
+        populate: undefined,
+      });
+    });
+
+    it('should handle empty select and omit', async () => {
+      const query = {
+        select: '',
+        omit: '',
+      } as any;
+
+      await controller.find(query);
+
+      expect(service.find).toHaveBeenCalledWith({
+        where: undefined,
+        limit: undefined,
+        skip: undefined,
+        sort: undefined,
+        select: '',
+        omit: '',
+        populate: undefined,
+      });
+    });
   });
 });

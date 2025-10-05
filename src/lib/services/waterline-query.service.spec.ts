@@ -8,7 +8,12 @@ describe('WaterlineQueryService', () => {
   let service: WaterlineQueryService<any>;
 
   beforeEach(() => {
-    const columns = [{ propertyPath: 'id' }, { propertyPath: 'name' }, { propertyPath: 'status' }];
+    const columns = [
+      { propertyPath: 'id' },
+      { propertyPath: 'name' },
+      { propertyPath: 'status' },
+      { propertyPath: 'age' },
+    ];
 
     const relation = {
       propertyName: 'children',
@@ -101,6 +106,7 @@ describe('WaterlineQueryService', () => {
     expect(queryBuilder.select).toHaveBeenCalledWith([
       'entity.id',
       'entity.name',
+      'entity.age',
       'populate_children',
     ]);
     expect(queryBuilder.orderBy).not.toHaveBeenCalled();
@@ -116,5 +122,227 @@ describe('WaterlineQueryService', () => {
     expect(repository.createQueryBuilder).toHaveBeenCalledWith('entity');
     expect(queryBuilder.andWhere).toHaveBeenCalled();
     expect(count).toBe(3);
+  });
+
+  describe('query criteria modifiers', () => {
+    it('should apply "<" modifier', async () => {
+      await service.findWithModifiers({
+        where: { age: { '<': 30 } },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('entity.age <'),
+        expect.any(Object),
+      );
+    });
+
+    it('should apply "<=" modifier', async () => {
+      await service.findWithModifiers({
+        where: { age: { '<=': 25 } },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('entity.age <='),
+        expect.any(Object),
+      );
+    });
+
+    it('should apply ">" modifier', async () => {
+      await service.findWithModifiers({
+        where: { age: { '>': 18 } },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('entity.age >'),
+        expect.any(Object),
+      );
+    });
+
+    it('should apply ">=" modifier', async () => {
+      await service.findWithModifiers({
+        where: { age: { '>=': 21 } },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('entity.age >='),
+        expect.any(Object),
+      );
+    });
+
+    it('should apply "!=" modifier', async () => {
+      await service.findWithModifiers({
+        where: { status: { '!=': 'inactive' } },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('entity.status !='),
+        expect.any(Object),
+      );
+    });
+
+    it('should apply "in" modifier', async () => {
+      await service.findWithModifiers({
+        where: { status: { in: ['active', 'pending'] } },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('entity.status IN'),
+        expect.any(Object),
+      );
+    });
+
+    it('should apply "nin" modifier', async () => {
+      await service.findWithModifiers({
+        where: { status: { nin: ['inactive', 'banned'] } },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('entity.status NOT IN'),
+        expect.any(Object),
+      );
+    });
+
+    it('should apply "contains" modifier', async () => {
+      await service.findWithModifiers({
+        where: { name: { contains: 'john' } },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('entity.name LIKE'),
+        expect.any(Object),
+      );
+    });
+
+    it('should apply "startsWith" modifier', async () => {
+      await service.findWithModifiers({
+        where: { name: { startsWith: 'John' } },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('entity.name LIKE'),
+        expect.any(Object),
+      );
+    });
+
+    it('should apply "endsWith" modifier', async () => {
+      await service.findWithModifiers({
+        where: { name: { endsWith: 'son' } },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('entity.name LIKE'),
+        expect.any(Object),
+      );
+    });
+  });
+
+  describe('complex queries', () => {
+    it('should handle "or" conditions', async () => {
+      await service.findWithModifiers({
+        where: {
+          or: [{ status: 'active' }, { age: { '>': 25 } }],
+        },
+      });
+
+      expect(queryBuilder.orWhere).toHaveBeenCalled();
+    });
+
+    it('should handle "and" conditions', async () => {
+      await service.findWithModifiers({
+        where: {
+          and: [{ status: 'active' }, { age: { '>': 18 } }],
+        },
+      });
+
+      expect(queryBuilder.andWhere).toHaveBeenCalled();
+    });
+
+    it('should handle nested criteria with modifiers', async () => {
+      await service.findWithModifiers({
+        where: {
+          or: [{ name: { contains: 'john' } }, { age: { '>': 30 }, status: 'active' }],
+        },
+      });
+
+      expect(queryBuilder.orWhere).toHaveBeenCalled();
+    });
+  });
+
+  describe('query options', () => {
+    it('should handle pagination with limit and skip', async () => {
+      await service.findWithModifiers({
+        limit: 20,
+        skip: 40,
+      });
+
+      expect(queryBuilder.take).toHaveBeenCalledWith(20);
+      expect(queryBuilder.skip).toHaveBeenCalledWith(40);
+    });
+
+    it('should handle string sort with DESC', async () => {
+      await service.findWithModifiers({
+        sort: 'createdAt DESC',
+      });
+
+      expect(queryBuilder.orderBy).toHaveBeenCalledWith('entity.createdAt', 'DESC');
+    });
+
+    it('should handle string sort with ASC', async () => {
+      await service.findWithModifiers({
+        sort: 'name ASC',
+      });
+
+      expect(queryBuilder.orderBy).toHaveBeenCalledWith('entity.name', 'ASC');
+    });
+
+    it('should handle string sort without direction (defaults to ASC)', async () => {
+      await service.findWithModifiers({
+        sort: 'name',
+      });
+
+      expect(queryBuilder.orderBy).toHaveBeenCalledWith('entity.name', 'ASC');
+    });
+
+    it('should handle select fields', async () => {
+      await service.findWithModifiers({
+        select: 'id,name,email',
+      });
+
+      expect(queryBuilder.select).toHaveBeenCalledWith([
+        'entity.id',
+        'entity.name',
+        'entity.email',
+      ]);
+    });
+
+    it('should handle omit fields', async () => {
+      await service.findWithModifiers({
+        omit: 'name,status',
+      });
+
+      expect(queryBuilder.select).toHaveBeenCalledWith(['entity.id', 'entity.age']);
+    });
+
+    it('should handle populate as string', async () => {
+      await service.findWithModifiers({
+        populate: 'children',
+      });
+
+      expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'entity.children',
+        'populate_children',
+      );
+    });
+
+    it('should handle populate as array', async () => {
+      await service.findWithModifiers({
+        populate: ['children'],
+      });
+
+      expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'entity.children',
+        'populate_children',
+      );
+    });
   });
 });

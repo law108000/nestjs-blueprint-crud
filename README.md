@@ -6,6 +6,8 @@ A comprehensive NestJS library for automatic CRUD operations with TypeORM, compl
 
 This library draws inspiration from [SailsJS](https://sailsjs.com/) and its blueprint API, bringing the concept of automatic CRUD generation to the modern NestJS ecosystem with full TypeScript support and contemporary development practices.
 
+I used Sails.js for several years, but i decided to migrate to another NestJS library due to evolving business needs. The migration path was quite painful, so I developed and published this package to help others who might face similar challenges.
+
 ## Enhancements over Sails.js Blueprints
 
 This NestJS implementation goes beyond the original Sails.js blueprint concept by providing significant improvements:

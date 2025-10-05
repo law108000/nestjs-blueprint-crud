@@ -9,7 +9,6 @@ import {
   Inject,
   Param,
   Module,
-  Put,
   Post,
   Patch,
   Query,
@@ -155,6 +154,18 @@ export class CrudControllerModule {
       }
 
       @UseInterceptors(ClassSerializerInterceptor)
+      @Patch('bulk')
+      @ApiOkResponse({ type: [RecordDto] })
+      async bulkUpdate(
+        @Query() query: Record<string, string>,
+        @Body() entity: UpdateRequestDto,
+      ): Promise<T[]> {
+        const { ids } = query;
+        const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
+        return await this.crudService.bulkUpdate(idArray, entity as Partial<T>);
+      }
+
+      @UseInterceptors(ClassSerializerInterceptor)
       @Patch(':id')
       @UsePipes(
         new ValidationPipe({
@@ -174,22 +185,12 @@ export class CrudControllerModule {
       }
 
       @UseInterceptors(ClassSerializerInterceptor)
-      @Put(':id')
-      @UsePipes(
-        new ValidationPipe({
-          transform: true,
-          expectedType: UpdateDto,
-          exceptionFactory: errors => new BadRequestException(errors),
-          transformOptions: { exposeUnsetFields: false, strategy: 'excludeAll' },
-        }),
-      )
-      @ApiOkResponse({ type: RecordDto })
-      async replace(
-        @Param('id', ValidateIdPipe) id: number,
-        @Body() entity: UpdateRequestDto = new UpdateDto(),
-      ): Promise<T> {
-        if (!update) throw new ForbiddenException();
-        return await super.update(id, entity);
+      @Delete('bulk')
+      @ApiOkResponse({ type: [RecordDto] })
+      async bulkRemove(@Query() query: Record<string, string>): Promise<T[]> {
+        const { ids } = query;
+        const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
+        return await this.crudService.bulkRemove(idArray);
       }
 
       @UseInterceptors(ClassSerializerInterceptor)
