@@ -5,6 +5,8 @@
   <a href="https://github.com/law108000/nestjs-blueprint-crud/actions/workflows/ci.yml"><img src="https://github.com/law108000/nestjs-blueprint-crud/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://codecov.io/gh/law108000/nestjs-blueprint-crud"><img src="https://codecov.io/gh/law108000/nestjs-blueprint-crud/branch/main/graph/badge.svg" alt="Coverage" /></a>
   <a href="https://github.com/law108000/nestjs-blueprint-crud/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-teal.svg" alt="MIT License" /></a>
+  <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen" alt="Node.js Version" />
+  <a href="https://bundlephobia.com/package/nestjs-blueprint-crud"><img src="https://img.shields.io/bundlephobia/min/nestjs-blueprint-crud" alt="Bundle Size" /></a>
 </div>
 
 A comprehensive NestJS library for automatic CRUD operations with TypeORM, complex queries, and entity associations.
