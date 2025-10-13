@@ -464,6 +464,17 @@ Check the `examples/` directory for complete usage examples, including:
 
 Issues and Pull Requests are welcome!
 
+### Community Discussions
+
+We encourage community engagement through GitHub Discussions! Join the conversation to:
+
+- Ask questions about usage and implementation
+- Share your ideas and feature requests
+- Discuss best practices and integrations
+- Get help from the community and maintainers
+
+Start a discussion [here](https://github.com/law108000/nestjs-blueprint-crud/discussions) if you have questions or suggestions.
+
 ## License
 
 MIT License
