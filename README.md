@@ -11,6 +11,8 @@
 
 A comprehensive NestJS library for automatic CRUD operations with TypeORM, complex queries, and entity associations.
 
+> If you find this library helpful, please consider giving it a ⭐ on [GitHub](https://github.com/law108000/nestjs-blueprint-crud)!
+
 ## Inspiration
 
 This library draws inspiration from [SailsJS](https://sailsjs.com/) and its blueprint API, bringing the concept of automatic CRUD generation to the modern NestJS ecosystem with full TypeScript support and contemporary development practices.
@@ -278,8 +280,8 @@ export class User extends CrudEntity {
 @Entity()
 export class Order extends CrudEntity {
   @ManyToOne(() => User, user => user.orders)
-  @CreateProperty({ isTenantCrudEntity: true })
-  @UpdateProperty({ isTenantCrudEntity: true })
+  @CreateProperty({ description: 'User ID' })
+  @UpdateProperty({ description: 'User ID' })
   @QueryProperty({ isEntity: true, entityName: 'User' })
   @SerializeProperty({ isEntity: true, entityName: 'User' })
   user: User;

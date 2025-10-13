@@ -42,7 +42,7 @@ export function UpdateProperty(options: CreateUpdatePropertyOptions = {}) {
 }
 
 type ApiCreateUpdatePropertyOptions = ApiPropertyOptions & {
-  isTenantCrudEntity?: boolean;
+  isCrudEntity?: boolean;
   isISO8601?: boolean;
   isTimestamp?: boolean;
 };
@@ -50,11 +50,11 @@ type ApiCreateUpdatePropertyOptions = ApiPropertyOptions & {
 export function ApiCreateUpdateOptional(
   options: ApiCreateUpdatePropertyOptions = {},
 ): PropertyDecorator {
-  const { type: originalType, isTenantCrudEntity } = options;
+  const { type: originalType, isCrudEntity } = options;
   if (typeof originalType === 'string') {
     options.type = originalType;
   }
-  if (isTenantCrudEntity) {
+  if (isCrudEntity) {
     options.type = 'number';
   }
   if (!options.type) {
@@ -70,7 +70,7 @@ export function ApiCreateUpdateOptional(
       : `${enumKeyValuePairs.map(v => `- ${v}`).join('\n')}`;
   }
 
-  delete options.isTenantCrudEntity;
+  delete options.isCrudEntity;
   delete options.isISO8601;
   delete options.isTimestamp;
 
@@ -111,7 +111,7 @@ function generateSwaggerDtoForEntity(
     const { isISO8601, isTimestamp, isEntity } = metadata;
     const originalType = Reflect.getMetadata('design:type', target.prototype, propertyKey);
     const originalTypeName = originalType?.name?.toLowerCase();
-    const isTenantCrudEntity = originalType && originalType.prototype instanceof CrudEntity;
+    const isCrudEntity = originalType && originalType.prototype instanceof CrudEntity;
     const isEnum = !!metadata.enum;
 
     Expose()(Dto.prototype, propertyKey);
@@ -133,11 +133,11 @@ function generateSwaggerDtoForEntity(
       )(Dto.prototype, propertyKey);
     }
 
-    if (isTenantCrudEntity || isEntity) {
+    if (isCrudEntity || isEntity) {
       ApiCreateUpdateOptional({
         ...metadata,
         type: 'number',
-        isTenantCrudEntity: true,
+        isCrudEntity: true,
       })(Dto.prototype, propertyKey);
     } else if (isEnum) {
       ApiCreateUpdateOptional({

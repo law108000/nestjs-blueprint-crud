@@ -135,13 +135,13 @@ export function generateSwaggerQueryDtoForEntity<T extends CrudEntity>(
     const { isEntity } = metadata;
     const originalType = Reflect.getMetadata('design:type', target.prototype, propertyKey);
     const originalTypeName = originalType?.name?.toLowerCase();
-    const isTenantCrudEntity = originalType?.prototype instanceof CrudEntity;
+    const isCrudEntity = originalType?.prototype instanceof CrudEntity;
     const isEnum = !!metadata.enum;
 
     Expose()(QueryCriteria.prototype, propertyKey);
     IsOptional()(QueryCriteria.prototype, propertyKey);
 
-    if (isTenantCrudEntity || isEntity) {
+    if (isCrudEntity || isEntity) {
       ApiWhereCriteriaOptional({
         ...metadata,
         type: 'number',

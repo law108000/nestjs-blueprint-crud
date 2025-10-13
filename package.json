@@ -15,7 +15,12 @@
     "decorators",
     "dynamic-modules",
     "query-builder",
-    "associations"
+    "associations",
+    "crud-generator",
+    "auto-crud",
+    "api-generator",
+    "backend",
+    "frameworks"
   ],
   "author": "law108000",
   "license": "MIT",
