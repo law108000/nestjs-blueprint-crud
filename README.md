@@ -9,7 +9,7 @@
   <a href="https://bundlephobia.com/package/nestjs-blueprint-crud"><img src="https://img.shields.io/bundlephobia/min/nestjs-blueprint-crud" alt="Bundle Size" /></a>
 </div>
 
-A comprehensive NestJS library for automatic CRUD operations with TypeORM, complex queries, and entity associations.
+A NestJS library that brings Sails.js blueprint concepts and compatibility to the contemporary ecosystem with full TypeScript support.
 
 > If you find this library helpful, please consider giving it a ⭐ on [GitHub](https://github.com/law108000/nestjs-blueprint-crud)!
 
@@ -47,10 +47,8 @@ This NestJS implementation goes beyond the original Sails.js blueprint concept b
 
 🎪 **Validation & Serialization**: Integrated request/response validation and transformation using class-validator and class-transformer.
 
-🚀 **Automatic CRUD**: Auto-generate complete REST API endpoints  
-🔍 **Complex Queries**: Support advanced query syntax with operators, sorting, and pagination  
-🔗 **Association Management**: Complete entity relationship operation support  
 🎨 **Decorator-Driven**: Use decorators to define API behavior  
+🎯 **Unified CrudProperty**: Single decorator for all CRUD operations (replaces CreateProperty, UpdateProperty, QueryProperty, SerializeProperty)
 📚 **Swagger Integration**: Automatic API documentation generation  
 🛡️ **Type Safety**: Full TypeScript support  
 🎯 **Permission Control**: Fine-grained operation permission settings
@@ -63,13 +61,52 @@ npm install nestjs-blueprint-crud
 yarn add nestjs-blueprint-crud
 ```
 
-### Peer Dependencies
+### CrudProperty Decorator
 
-Make sure to install the following peer dependencies:
+The `CrudProperty` decorator provides a unified way to configure properties for all CRUD operations, reducing redundancy:
 
-```bash
-npm install @nestjs/common @nestjs/core @nestjs/swagger typeorm class-transformer class-validator reflect-metadata
+```typescript
+@CrudProperty({ description: 'User name' }) // Enables all operations by default
+name: string;
+
+@CrudProperty({
+  description: 'Email address',
+  create: { required: true },  // Custom create options
+  update: { required: false }, // Custom update options
+  query: true,                  // Enable querying
+  serialize: true               // Include in responses
+})
+email: string;
+
+@CrudProperty({
+  description: 'Age',
+  create: false,  // Disable creation
+  update: true,   // Allow updates only
+  query: true,    // Allow filtering
+  serialize: true // Include in responses
+})
+age?: number;
 ```
+
+**Operation Control:**
+
+- `create`: `boolean | CreateUpdatePropertyOptions` - Controls create operations
+- `update`: `boolean | CreateUpdatePropertyOptions` - Controls update operations
+- `query`: `boolean | QueryPropertyOptions` - Controls query/filtering operations
+- `serialize`: `boolean | SerializePropertyOptions` - Controls response serialization
+
+**Entity Relationships:**
+
+```typescript
+@CrudProperty({
+  description: 'User ID',
+  isEntity: true,
+  entityName: 'User'
+})
+user: User;
+```
+
+**Backward Compatibility:** The individual decorators (`CreateProperty`, `UpdateProperty`, `QueryProperty`, `SerializeProperty`) are still supported for existing code.
 
 ## Quick Start
 
@@ -83,6 +120,7 @@ Follow the steps in [Installation](#installation) to add the package and require
 import { Entity, Column } from 'typeorm';
 import {
   CrudEntity,
+  CrudProperty, // New unified decorator
   CreateProperty,
   UpdateProperty,
   QueryProperty,
@@ -92,25 +130,37 @@ import {
 @Entity()
 export class User extends CrudEntity {
   @Column()
-  @CreateProperty({ description: 'User name' })
-  @UpdateProperty({ description: 'User name' })
-  @QueryProperty({ description: 'User name' })
-  @SerializeProperty({ description: 'User name' })
+  @CrudProperty({ description: 'User name' }) // Unified decorator - enables all operations
   name: string;
 
   @Column()
-  @CreateProperty({ description: 'Email address' })
-  @UpdateProperty({ description: 'Email address' })
-  @QueryProperty({ description: 'Email address' })
-  @SerializeProperty({ description: 'Email address' })
+  @CrudProperty({
+    description: 'Email address',
+    create: { required: true }, // Custom create options
+    update: { required: false }, // Custom update options
+    query: true, // Enable querying
+    serialize: true, // Enable serialization
+  })
   email: string;
 
   @Column({ nullable: true })
-  @CreateProperty({ description: 'Age', required: false })
-  @UpdateProperty({ description: 'Age', required: false })
-  @QueryProperty({ description: 'Age' })
-  @SerializeProperty({ description: 'Age' })
+  @CrudProperty({
+    description: 'Age',
+    required: false,
+    create: false, // Disable creation
+    update: true, // Allow updates
+    query: true, // Allow querying
+    serialize: true, // Include in responses
+  })
   age?: number;
+
+  // Legacy approach (still supported)
+  // @Column()
+  // @CreateProperty({ description: 'User name' })
+  // @UpdateProperty({ description: 'User name' })
+  // @QueryProperty({ description: 'User name' })
+  // @SerializeProperty({ description: 'User name' })
+  // name: string;
 }
 ```
 
@@ -280,10 +330,11 @@ export class User extends CrudEntity {
 @Entity()
 export class Order extends CrudEntity {
   @ManyToOne(() => User, user => user.orders)
-  @CreateProperty({ description: 'User ID' })
-  @UpdateProperty({ description: 'User ID' })
-  @QueryProperty({ isEntity: true, entityName: 'User' })
-  @SerializeProperty({ isEntity: true, entityName: 'User' })
+  @CrudProperty({
+    description: 'User ID',
+    isEntity: true,
+    entityName: 'User',
+  })
   user: User;
 }
 ```

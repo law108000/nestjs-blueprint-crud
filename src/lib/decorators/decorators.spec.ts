@@ -15,6 +15,7 @@ import {
   SerializeProperty,
   generateSwaggerRecordDtoForEntity,
 } from './serialize-property.decorator';
+import { CrudProperty } from './crud-property.decorator';
 
 class DecoratedEntity extends CrudEntity {
   name!: string;
@@ -130,5 +131,91 @@ describe('Custom decorators', () => {
     expect(plain.createdAtIso).toBe(dateIso.toISOString());
     expect(plain.createdAtTimestamp).toBe(dateTimestamp.getTime());
     expect(plain.name).toBe('Test');
+  });
+
+  it('should apply all decorators when using CrudProperty', () => {
+    class CrudPropertyEntity extends CrudEntity {
+      unifiedField!: string;
+    }
+
+    // Apply CrudProperty decorator
+    CrudProperty({
+      description: 'Unified field',
+      type: 'string',
+    })(CrudPropertyEntity.prototype, 'unifiedField');
+
+    // Check that all individual decorators were applied
+    const createMetadata = Reflect.getMetadata(
+      'unifiedField@CREATE_PROPERTY_METADATA_KEY',
+      CrudPropertyEntity.prototype,
+    );
+    const updateMetadata = Reflect.getMetadata(
+      'unifiedField@UPDATE_PROPERTY_METADATA_KEY',
+      CrudPropertyEntity.prototype,
+    );
+    const queryMetadata = getQueryPropertyMetadata(CrudPropertyEntity.prototype, 'unifiedField');
+    const serializeMetadata = Reflect.getMetadata(
+      'unifiedField@SERIALIZE_PROPERTY_METADATA_KEY',
+      CrudPropertyEntity.prototype,
+    );
+
+    expect(createMetadata).toEqual({
+      description: 'Unified field',
+      type: 'string',
+    });
+    expect(updateMetadata).toEqual({
+      description: 'Unified field',
+      type: 'string',
+    });
+    expect(queryMetadata).toEqual({
+      description: 'Unified field',
+      type: 'string',
+    });
+    expect(serializeMetadata).toEqual({
+      description: 'Unified field',
+      type: 'string',
+    });
+  });
+
+  it('should allow selective operation control with CrudProperty', () => {
+    class SelectiveEntity extends CrudEntity {
+      selectiveField!: string;
+    }
+
+    // Apply CrudProperty with selective operations
+    CrudProperty({
+      description: 'Selective field',
+      type: 'string',
+      create: false, // Disable create
+      update: true, // Enable update
+      query: false, // Disable query
+      serialize: true, // Enable serialize
+    })(SelectiveEntity.prototype, 'selectiveField');
+
+    // Check that only enabled decorators were applied
+    const createMetadata = Reflect.getMetadata(
+      'selectiveField@CREATE_PROPERTY_METADATA_KEY',
+      SelectiveEntity.prototype,
+    );
+    const updateMetadata = Reflect.getMetadata(
+      'selectiveField@UPDATE_PROPERTY_METADATA_KEY',
+      SelectiveEntity.prototype,
+    );
+    const queryMetadata = getQueryPropertyMetadata(SelectiveEntity.prototype, 'selectiveField');
+    const serializeMetadata = Reflect.getMetadata(
+      'selectiveField@SERIALIZE_PROPERTY_METADATA_KEY',
+      SelectiveEntity.prototype,
+    );
+
+    expect(createMetadata).toBeUndefined();
+    expect(updateMetadata).toEqual({
+      description: 'Selective field',
+      type: 'string',
+    });
+    expect(queryMetadata).toBeUndefined();
+    expect(serializeMetadata).toEqual({
+      description: 'Selective field',
+      type: 'string',
+    });
   });
 });

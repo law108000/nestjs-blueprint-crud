@@ -14,6 +14,7 @@ export * from './lib/controllers/base-association.controller';
 export * from './lib/decorators/create-update-property.decorator';
 export * from './lib/decorators/query-property.decorator';
 export * from './lib/decorators/serialize-property.decorator';
+export * from './lib/decorators/crud-property.decorator';
 
 // DTOs
 export * from './lib/dtos/query.dto';

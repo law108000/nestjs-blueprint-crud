@@ -5,44 +5,42 @@ import {
   UpdateProperty,
   QueryProperty,
   SerializeProperty,
+  CrudProperty, // New unified decorator
 } from 'nestjs-blueprint-crud';
 import { Order } from './order.entity';
 
 @Entity('users')
 export class User extends CrudEntity {
   @Column()
-  @CreateProperty({
+  @CrudProperty({
     description: 'User name',
     example: 'John Doe',
-  })
-  @UpdateProperty({
-    description: 'User name',
-    example: 'John Doe',
-  })
-  @QueryProperty({
-    description: 'User name',
-    example: 'John',
-  })
-  @SerializeProperty({
-    description: 'User name',
   })
   name!: string;
 
+  // Legacy approach (still supported):
+  // @Column()
+  // @CreateProperty({
+  //   description: 'User name',
+  //   example: 'John Doe',
+  // })
+  // @UpdateProperty({
+  //   description: 'User name',
+  //   example: 'John Doe',
+  // })
+  // @QueryProperty({
+  //   description: 'User name',
+  //   example: 'John',
+  // })
+  // @SerializeProperty({
+  //   description: 'User name',
+  // })
+  // name!: string;
+
   @Column({ unique: true })
-  @CreateProperty({
+  @CrudProperty({
     description: 'Email address',
     example: 'john@example.com',
-  })
-  @UpdateProperty({
-    description: 'Email address',
-    example: 'john@example.com',
-  })
-  @QueryProperty({
-    description: 'Email address',
-    example: 'john@',
-  })
-  @SerializeProperty({
-    description: 'Email address',
   })
   email!: string;
 
