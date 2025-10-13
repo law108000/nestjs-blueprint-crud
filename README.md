@@ -1,4 +1,4 @@
-# nestjs-blueprint-crud
+# NestJS Blueprint CRUD
 
 <div align="center">
   <a href="https://www.npmjs.com/package/nestjs-blueprint-crud"><img src="https://img.shields.io/npm/v/nestjs-blueprint-crud" alt="NPM Version" /></a>
@@ -23,35 +23,15 @@ I used Sails.js for several years, but i decided to migrate to another NestJS li
 
 This NestJS implementation goes beyond the original Sails.js blueprint concept by providing significant improvements:
 
-🛡️ **Full TypeScript Support**: Complete type safety with TypeScript interfaces, generics, and compile-time checks - no more runtime JavaScript errors.
-
-🎯 **NestJS Ecosystem Integration**: Seamlessly integrates with NestJS modules, dependency injection, guards, interceptors, pipes, and middleware for enterprise-grade applications.
-
-⚡ **TypeORM Integration**: Uses the modern, high-performance TypeORM instead of Waterline, providing better query optimization, migration support, and database compatibility.
-
-🎨 **Decorator-Driven Architecture**: Fine-grained control over API behavior using property decorators (`@CreateProperty`, `@UpdateProperty`, `@QueryProperty`, `@SerializeProperty`) for each field.
-
-📚 **Automatic Swagger Documentation**: Built-in OpenAPI/Swagger documentation generation with proper request/response models, validation schemas, and interactive API testing.
-
-🔐 **Advanced Permission Control**: Granular permission settings per CRUD operation, enabling sophisticated access control patterns.
-
-🔄 **Soft Deletes & Bulk Operations**: Support for soft deletes, bulk create/update/delete operations, and record restoration - features not available in basic Sails blueprints.
-
-🧪 **Comprehensive Testing**: Includes unit tests, integration tests, and end-to-end test suites with Jest, ensuring reliability and compatibility.
-
-🔧 **Modern Async/Await**: Leverages contemporary JavaScript async patterns without callback hell.
-
-📊 **Enhanced Query Capabilities**: Advanced filtering, sorting, pagination, and association loading with TypeORM's powerful query builder.
-
-🛠️ **Extensibility**: Easy to extend and customize with dependency injection, allowing composition of custom business logic on top of generated services.
-
-🎪 **Validation & Serialization**: Integrated request/response validation and transformation using class-validator and class-transformer.
-
-🎨 **Decorator-Driven**: Use decorators to define API behavior  
-🎯 **Unified CrudProperty**: Single decorator for all CRUD operations (replaces CreateProperty, UpdateProperty, QueryProperty, SerializeProperty)
-📚 **Swagger Integration**: Automatic API documentation generation  
-🛡️ **Type Safety**: Full TypeScript support  
-🎯 **Permission Control**: Fine-grained operation permission settings
+| Feature                           | Sails.js Support                                                | NestJS Blueprint CRUD Enhancements                                                                    |
+| --------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Basic CRUD Operations**         | ✅ Supported (find, findOne, create, update, destroy)           | ✅ Supported + Enhanced with TypeScript types, additional endpoints (count, bulk operations, restore) |
+| **Query Parameters**              | ✅ Supported (where, limit, skip, sort, select, omit, populate) | ✅ Supported + Enhanced validation, additional operators, and type safety                             |
+| **Association Operations**        | ✅ Supported (add, remove, replace)                             | ✅ Supported + Improved type safety, additional endpoints (count)                                     |
+| **TypeScript Support**            | ❌ Not native (JavaScript-based)                                | ✅ Full TypeScript support with interfaces, generics, and compile-time checks                         |
+| **Database ORM**                  | Waterline                                                       | TypeORM (modern, high-performance alternative with better optimization and migration support)         |
+| **Decorator-Driven Architecture** | ❌ Limited                                                      | ✅ Fine-grained control with property decorators and unified CrudProperty decorator                   |
+| **API Documentation**             | ❌ Manual setup required                                        | ✅ Automatic Swagger/OpenAPI documentation generation                                                 |
 
 ## Installation
 
@@ -118,14 +98,7 @@ Follow the steps in [Installation](#installation) to add the package and require
 
 ```typescript
 import { Entity, Column } from 'typeorm';
-import {
-  CrudEntity,
-  CrudProperty, // New unified decorator
-  CreateProperty,
-  UpdateProperty,
-  QueryProperty,
-  SerializeProperty,
-} from 'nestjs-blueprint-crud';
+import { CrudEntity, CrudProperty } from 'nestjs-blueprint-crud';
 
 @Entity()
 export class User extends CrudEntity {
@@ -153,14 +126,6 @@ export class User extends CrudEntity {
     serialize: true, // Include in responses
   })
   age?: number;
-
-  // Legacy approach (still supported)
-  // @Column()
-  // @CreateProperty({ description: 'User name' })
-  // @UpdateProperty({ description: 'User name' })
-  // @QueryProperty({ description: 'User name' })
-  // @SerializeProperty({ description: 'User name' })
-  // name: string;
 }
 ```
 
@@ -431,14 +396,14 @@ While this library maintains API compatibility with Sails.js blueprints for easy
 If you need custom business logic, inject the generated base service and compose new methods on top:
 
 ```typescript
-import { Inject, Injectable } from '@nestjs/common';
-import { CrudService, getCrudServiceInjectToken } from 'nestjs-blueprint-crud';
+import { Injectable } from '@nestjs/common';
+import { CrudService, InjectCrudService } from 'nestjs-blueprint-crud';
 import { User } from './user.entity';
 
 @Injectable()
 export class UserService {
   constructor(
-    @Inject(getCrudServiceInjectToken(User))
+    @InjectCrudService(User)
     private readonly crudService: CrudService<User>,
   ) {}
 
@@ -453,6 +418,8 @@ export class UserService {
   }
 }
 ```
+
+> **Note**: The `@InjectCrudService(User)` decorator is a convenience wrapper around `@Inject(getCrudServiceInjectToken(User))` for cleaner syntax.
 
 ## Permission Control
 

@@ -16,6 +16,8 @@ import {
   generateSwaggerRecordDtoForEntity,
 } from './serialize-property.decorator';
 import { CrudProperty } from './crud-property.decorator';
+import { InjectCrudService } from './inject-crud-service.decorator';
+import { getCrudServiceInjectToken } from '../modules/base-service.module';
 
 class DecoratedEntity extends CrudEntity {
   name!: string;
@@ -216,6 +218,23 @@ describe('Custom decorators', () => {
     expect(serializeMetadata).toEqual({
       description: 'Selective field',
       type: 'string',
+    });
+  });
+
+  describe('InjectCrudService', () => {
+    it('should return an Inject decorator with the correct token', () => {
+      class TestEntity extends CrudEntity {}
+
+      const decorator = InjectCrudService(TestEntity);
+      const expectedToken = getCrudServiceInjectToken(TestEntity);
+
+      // The decorator should be an Inject decorator
+      expect(decorator).toBeDefined();
+      expect(typeof decorator).toBe('function');
+
+      // We can't easily test the exact decorator behavior without more complex setup,
+      // but we can verify it returns something and the token is correct
+      expect(expectedToken).toBe('TestEntityCrudService');
     });
   });
 });

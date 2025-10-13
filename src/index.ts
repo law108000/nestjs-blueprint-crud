@@ -15,6 +15,7 @@ export * from './lib/decorators/create-update-property.decorator';
 export * from './lib/decorators/query-property.decorator';
 export * from './lib/decorators/serialize-property.decorator';
 export * from './lib/decorators/crud-property.decorator';
+export * from './lib/decorators/inject-crud-service.decorator';
 
 // DTOs
 export * from './lib/dtos/query.dto';

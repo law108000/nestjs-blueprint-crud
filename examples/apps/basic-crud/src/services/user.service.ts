@@ -1,11 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { CrudService, getCrudServiceInjectToken } from 'nestjs-blueprint-crud';
+import { Injectable } from '@nestjs/common';
+import { CrudService, InjectCrudService } from 'nestjs-blueprint-crud';
 import { User } from '../entities/user.entity';
 
 @Injectable()
 export class UserService {
   constructor(
-    @Inject(getCrudServiceInjectToken(User))
+    @InjectCrudService(User)
     private readonly crudService: CrudService<User>,
   ) {}
 
