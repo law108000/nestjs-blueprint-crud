@@ -36,10 +36,29 @@ jobs:
     - name: Run test coverage
       run: npm run test:coverage
 
+    - name: Setup Docker
+      run: |
+        docker --version
+        docker compose version
+
     - name: Run e2e tests
-      # if: matrix.node-version == '20.x'
+      if: matrix.node-version == '20.x'  # Only run full e2e tests on Node 20.x
       env:
         DB_HOST: 127.0.0.1
+      timeout-minutes: 15
+      run: |
+        echo "Running MySQL e2e tests..."
+        npm run test:e2e
+        echo "Running PostgreSQL e2e tests..."
+        npm run test:e2e:postgres
+        echo "Running SQLite e2e tests..."
+        npm run test:e2e:sqlite
+
+    - name: Run basic e2e test (MySQL only)
+      if: matrix.node-version == '18.x'  # Run basic test on Node 18.x
+      env:
+        DB_HOST: 127.0.0.1
+      timeout-minutes: 10
       run: npm run test:e2e
 
     - name: Build project

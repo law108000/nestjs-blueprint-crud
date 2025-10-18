@@ -15,9 +15,9 @@ A NestJS library that brings Sails.js blueprint concepts and compatibility to th
 
 ## Inspiration
 
-This library draws inspiration from [SailsJS](https://sailsjs.com/) and its blueprint API, bringing the concept of automatic CRUD generation to the modern NestJS ecosystem with full TypeScript support and contemporary development practices.
+This library draws inspiration from [SailsJS](https://sailsjs.com/) and its blueprint API, bringing the concept of automatic CRUD generation to the modern [NestJS](https://nestjs.com/) ecosystem with full TypeScript support and contemporary development practices.
 
-I used Sails.js for several years, but i decided to migrate to another NestJS library due to evolving business needs. The migration path was quite painful, so I developed and published this package to help others who might face similar challenges.
+I used Sails.js for several years, but i decided to migrate to NestJS due to evolving business needs. The migration path was quite painful, so I developed and published this package to help others who might face similar challenges.
 
 ## Enhancements over Sails.js Blueprints
 
@@ -32,6 +32,18 @@ This NestJS implementation goes beyond the original Sails.js blueprint concept b
 | **Database ORM**                  | Waterline                                                       | TypeORM (modern, high-performance alternative with better optimization and migration support)         |
 | **Decorator-Driven Architecture** | ❌ Limited                                                      | ✅ Fine-grained control with property decorators and unified CrudProperty decorator                   |
 | **API Documentation**             | ❌ Manual setup required                                        | ✅ Automatic Swagger/OpenAPI documentation generation                                                 |
+
+## Database Support
+
+This library supports multiple databases through TypeORM, with comprehensive testing across all supported platforms:
+
+| Database              | Status        | Testing           | Notes                                           |
+| --------------------- | ------------- | ----------------- | ----------------------------------------------- |
+| **MySQL**             | ✅ Supported  | ✅ E2E Tests      | Full feature support with Docker-based testing  |
+| **PostgreSQL**        | ✅ Supported  | ✅ E2E Tests      | Full feature support with Docker-based testing  |
+| **SQLite**            | ✅ Supported  | ✅ E2E Tests      | Full feature support with file-based testing    |
+
+> **Note**: All databases are tested with the same comprehensive test suite to ensure feature parity and reliability.
 
 ## Installation
 
@@ -103,16 +115,16 @@ import { CrudEntity, CrudProperty } from 'nestjs-blueprint-crud';
 @Entity()
 export class User extends CrudEntity {
   @Column()
-  @CrudProperty({ description: 'User name' }) // Unified decorator - enables all operations
+  @CrudProperty({ description: 'User name' })
   name: string;
 
   @Column()
   @CrudProperty({
     description: 'Email address',
-    create: { required: true }, // Custom create options
-    update: { required: false }, // Custom update options
-    query: true, // Enable querying
-    serialize: true, // Enable serialization
+    create: { required: true },
+    update: { required: false },
+    query: true,
+    serialize: true,
   })
   email: string;
 
@@ -120,16 +132,94 @@ export class User extends CrudEntity {
   @CrudProperty({
     description: 'Age',
     required: false,
-    create: false, // Disable creation
-    update: true, // Allow updates
-    query: true, // Allow querying
-    serialize: true, // Include in responses
+    create: false,
+    update: true,
+    query: true,
+    serialize: true,
   })
   age?: number;
 }
 ```
 
-### 3. Provide a database connection
+`CrudEntity` provides `id`, `createdAt`, `updatedAt`, and `deletedAt` fields with automatic timestamp management.
+query: true,
+serialize: true,
+})
+email: string;
+
+@Column({ nullable: true })
+@CrudProperty({
+description: 'Age',
+required: false,
+create: false,
+update: true,
+query: true,
+serialize: true,
+})
+age?: number;
+}
+
+````
+
+`CrudEntity` automatically provides `id`, `createdAt`, `updatedAt`, and `deletedAt` fields with TypeORM's automatic timestamp management.
+
+### Customizing or Disabling Timestamp Fields
+
+You can customize timestamp field names or disable them entirely by overriding the properties in your entity:
+
+#### Custom timestamp field names:
+
+```typescript
+import { Entity, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { CrudEntity, CrudProperty } from 'nestjs-blueprint-crud';
+
+@Entity()
+export class CustomUser extends CrudEntity {
+  @Column()
+  @CrudProperty({ description: 'User name' })
+  name: string;
+
+  // Override default timestamp fields with custom names
+  @CreateDateColumn({
+    name: 'created_at',
+    comment: 'Record creation timestamp'
+  })
+  createdAt!: number; // Same property name, custom column name
+
+  @UpdateDateColumn({
+    name: 'updated_at',
+    comment: 'Record update timestamp'
+  })
+  updatedAt!: number;
+
+  @DeleteDateColumn({
+    name: 'deleted_at',
+    comment: 'Soft delete timestamp'
+  })
+  deletedAt?: number | null;
+}
+````
+
+#### Disable timestamps entirely:
+
+```typescript
+import { Entity, Column } from 'typeorm';
+import { CrudEntity, CrudProperty } from 'nestjs-blueprint-crud';
+
+@Entity()
+export class SimpleEntity extends CrudEntity {
+  @Column()
+  @CrudProperty({ description: 'Entity name' })
+  name: string;
+
+  // Override timestamp properties without decorators to disable them
+  createdAt?: never;
+  updatedAt?: never;
+  deletedAt?: never;
+}
+```
+
+**Note:** When you override timestamp properties with the same names but different decorators, TypeORM will use your custom decorators instead of the base class defaults.
 
 `CrudControllerModule` and `WaterlineQueryModule` resolve their repositories through a shared `DATABASE_CONNECTION` token. Expose it once at the application boundary and reuse it everywhere:
 

@@ -42,4 +42,3 @@ export * from './lib/modules/base-service.module';
 export * from './lib/modules/base-controller.module';
 
 // Utilities and types
-export { DateTransformer, BooleanTransformer, IntTransformer } from './lib/entities/base.entity';

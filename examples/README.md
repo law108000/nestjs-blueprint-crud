@@ -67,7 +67,10 @@ npm run db:stop
 - Repository-wide checks (library smoke tests and aggregator example):
 
   ```bash
-  npm run test:e2e
+  npm run test:e2e          # MySQL (default)
+  npm run test:e2e:postgres # PostgreSQL
+  npm run test:e2e:sqlite   # SQLite
+  npm run test:e2e:all      # All databases
   ```
 
 - Example-focused suites live in `examples/apps/<scenario>/test`. They are picked up automatically by the same Jest run, or you can scope to a single showcase:
@@ -77,7 +80,7 @@ npm run db:stop
   ```
 
   Use the scenario directory in the `--testPathPattern` flag to target other showcases.
-  The Basic CRUD specs lock in Sails blueprint compatibility (collection routes, raw-array `replace`, non-destructive `remove`), so regressions are caught automatically, and the script will start/stop the MySQL container for you.
+  The Basic CRUD specs lock in Sails blueprint compatibility (collection routes, raw-array `replace`, non-destructive `remove`), so regressions are caught automatically, and the script will start/stop the database container for you (MySQL/PostgreSQL) or use a local file (SQLite).
 
 ## Legacy import paths
 

@@ -34,9 +34,23 @@ export async function closeExampleApp(context: ExampleTestContext) {
 }
 
 export async function truncateTables(dataSource: DataSource, tableNames: readonly string[]) {
-  await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
-  for (const table of tableNames) {
-    await dataSource.query(`TRUNCATE TABLE ${table}`);
+  const dbType = dataSource.options.type as string;
+
+  if (dbType === 'sqlite') {
+    await dataSource.query('PRAGMA foreign_keys = OFF;');
+    for (const table of tableNames) {
+      await dataSource.query(`DELETE FROM ${table}`);
+    }
+    await dataSource.query('PRAGMA foreign_keys = ON;');
+  } else if (dbType === 'postgres') {
+    // PostgreSQL TRUNCATE with CASCADE to handle foreign keys
+    await dataSource.query(`TRUNCATE TABLE ${tableNames.join(', ')} CASCADE`);
+  } else {
+    // MySQL
+    await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
+    for (const table of tableNames) {
+      await dataSource.query(`TRUNCATE TABLE ${table}`);
+    }
+    await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
   }
-  await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
 }
