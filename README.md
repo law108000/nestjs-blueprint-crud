@@ -37,11 +37,11 @@ This NestJS implementation goes beyond the original Sails.js blueprint concept b
 
 This library supports multiple databases through TypeORM, with comprehensive testing across all supported platforms:
 
-| Database              | Status        | Testing           | Notes                                           |
-| --------------------- | ------------- | ----------------- | ----------------------------------------------- |
-| **MySQL**             | ✅ Supported  | ✅ E2E Tests      | Full feature support with Docker-based testing  |
-| **PostgreSQL**        | ✅ Supported  | ✅ E2E Tests      | Full feature support with Docker-based testing  |
-| **SQLite**            | ✅ Supported  | ✅ E2E Tests      | Full feature support with file-based testing    |
+| Database       | Status       | Testing      | Notes                                          |
+| -------------- | ------------ | ------------ | ---------------------------------------------- |
+| **MySQL**      | ✅ Supported | ✅ E2E Tests | Full feature support with Docker-based testing |
+| **PostgreSQL** | ✅ Supported | ✅ E2E Tests | Full feature support with Docker-based testing |
+| **SQLite**     | ✅ Supported | ✅ E2E Tests | Full feature support with file-based testing   |
 
 > **Note**: All databases are tested with the same comprehensive test suite to ensure feature parity and reliability.
 
