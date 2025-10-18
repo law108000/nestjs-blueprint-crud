@@ -42,6 +42,7 @@ This library supports multiple databases through TypeORM, with comprehensive tes
 | **MySQL**      | ✅ Supported | ✅ E2E Tests | Full feature support with Docker-based testing |
 | **PostgreSQL** | ✅ Supported | ✅ E2E Tests | Full feature support with Docker-based testing |
 | **SQLite**     | ✅ Supported | ✅ E2E Tests | Full feature support with file-based testing   |
+| **MongoDB**    | ✅ Supported | ✅ Ready     | Full feature support with Docker-based testing |
 
 > **Note**: All databases are tested with the same comprehensive test suite to ensure feature parity and reliability.
 
@@ -140,26 +141,6 @@ export class User extends CrudEntity {
   age?: number;
 }
 ```
-
-`CrudEntity` provides `id`, `createdAt`, `updatedAt`, and `deletedAt` fields with automatic timestamp management.
-query: true,
-serialize: true,
-})
-email: string;
-
-@Column({ nullable: true })
-@CrudProperty({
-description: 'Age',
-required: false,
-create: false,
-update: true,
-query: true,
-serialize: true,
-})
-age?: number;
-}
-
-````
 
 `CrudEntity` automatically provides `id`, `createdAt`, `updatedAt`, and `deletedAt` fields with TypeORM's automatic timestamp management.
 

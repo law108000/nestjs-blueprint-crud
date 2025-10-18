@@ -22,7 +22,10 @@
     "nestjs-crud",
     "nestjs-blueprint",
     "nestjs-waterline",
-    "rest-api"
+    "rest-api",
+    "nest-blueprint-crud",
+    "nestjs-blueprint-crud",
+    "nest"
   ],
   "author": "law108000",
   "license": "MIT",
