@@ -1,6 +1,6 @@
 {
   "name": "nestjs-blueprint-crud",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A NestJS library for automatic CRUD operations with TypeORM, inspired by SailsJS Blueprint API and Waterline ORM",
   "keywords": [
     "nestjs",
@@ -98,6 +98,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "jest": "^29.0.0",
+    "mongodb": "^6.20.0",
     "mysql2": "^2.3.3",
     "pg": "^8.16.3",
     "prettier": "^3.0.0",
