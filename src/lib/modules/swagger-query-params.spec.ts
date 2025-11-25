@@ -21,28 +21,28 @@ class TestDatabaseModule {
         findColumnWithPropertyPath: () => ({}),
       },
       createQueryBuilder: () => ({
-        andWhere: function () {
+        andWhere() {
           return this;
         },
-        orWhere: function () {
+        orWhere() {
           return this;
         },
-        leftJoinAndSelect: function () {
+        leftJoinAndSelect() {
           return this;
         },
-        take: function () {
+        take() {
           return this;
         },
-        skip: function () {
+        skip() {
           return this;
         },
-        orderBy: function () {
+        orderBy() {
           return this;
         },
-        addOrderBy: function () {
+        addOrderBy() {
           return this;
         },
-        select: function () {
+        select() {
           return this;
         },
         getRawAndEntities: async () => ({ raw: [], entities: [] }),

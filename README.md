@@ -163,23 +163,23 @@ export class CustomUser extends CrudEntity {
   // Override default timestamp fields with custom names
   @CreateDateColumn({
     name: 'created_at',
-    comment: 'Record creation timestamp'
+    comment: 'Record creation timestamp',
   })
   createdAt!: number; // Same property name, custom column name
 
   @UpdateDateColumn({
     name: 'updated_at',
-    comment: 'Record update timestamp'
+    comment: 'Record update timestamp',
   })
   updatedAt!: number;
 
   @DeleteDateColumn({
     name: 'deleted_at',
-    comment: 'Soft delete timestamp'
+    comment: 'Soft delete timestamp',
   })
   deletedAt?: number | null;
 }
-````
+```
 
 #### Disable timestamps entirely:
 
