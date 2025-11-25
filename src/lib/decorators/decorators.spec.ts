@@ -221,6 +221,44 @@ describe('Custom decorators', () => {
     });
   });
 
+  it('should exclude property from serialized output when serialize: false', () => {
+    class SerializeFalseEntity extends CrudEntity {
+      visibleField!: string;
+      secretField!: string;
+    }
+
+    // Apply CrudProperty with serialize: true (default)
+    CrudProperty({
+      description: 'Visible field',
+      type: 'string',
+    })(SerializeFalseEntity.prototype, 'visibleField');
+
+    // Apply CrudProperty with serialize: false
+    CrudProperty({
+      description: 'Secret field - should NOT be serialized',
+      type: 'string',
+      serialize: false,
+    })(SerializeFalseEntity.prototype, 'secretField');
+
+    // Create an instance with both properties
+    const entity = new SerializeFalseEntity();
+    Object.assign(entity, {
+      id: 1,
+      visibleField: 'visible-value',
+      secretField: 'secret-value',
+    });
+
+    // Use class-transformer to serialize (this is what ClassSerializerInterceptor uses)
+    const plain = instanceToPlain(entity);
+
+    // The secretField should be excluded from serialized output
+    expect(plain.secretField).toBeUndefined();
+    // The visibleField should be included
+    expect(plain.visibleField).toBe('visible-value');
+    // The id should be included
+    expect(plain.id).toBe(1);
+  });
+
   describe('InjectCrudService', () => {
     it('should return an Inject decorator with the correct token', () => {
       class TestEntity extends CrudEntity {}
