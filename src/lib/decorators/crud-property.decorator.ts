@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { type ApiPropertyOptions, type ApiResponseOptions } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 import { type CrudEntity } from '../entities/base.entity';
 import {
   CreateProperty,
@@ -71,6 +72,10 @@ export function CrudProperty(options: CrudPropertyOptions = {}) {
       const serializeOptions =
         typeof serialize === 'boolean' ? commonOptions : { ...commonOptions, ...serialize };
       SerializeProperty(serializeOptions as SerializePropertyOptions)(target, propertyKey);
+    } else {
+      // When serialize is explicitly false, apply Exclude decorator to prevent
+      // the property from being included in serialized responses
+      Exclude()(target, propertyKey);
     }
   };
 }
