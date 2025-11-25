@@ -23,7 +23,6 @@ import type { CrudEntity } from '../entities/base.entity';
 import { CrudController } from '../controllers/base.controller';
 import { CrudServiceModule, getCrudServiceInjectToken } from './base-service.module';
 import { CrudService } from '../services/base.service';
-import { generateSwaggerQueryDtoForEntity } from '../decorators/query-property.decorator';
 import { generateSwaggerRecordDtoForEntity } from '../decorators/serialize-property.decorator';
 import { generateSwaggerCreateUpdateDtoForEntity } from '../decorators/create-update-property.decorator';
 import {
@@ -67,7 +66,6 @@ export class CrudControllerModule {
     } = permissions;
     const GetDto = (dtos?.get ?? GetQueryParamsRequestDto) as new () => GetQueryParamsRequestDto;
 
-    const { CountQueryDto, ListQueryDto } = generateSwaggerQueryDtoForEntity(config.entity);
     const { CreateDto, UpdateDto } = generateSwaggerCreateUpdateDtoForEntity(config.entity);
     const RecordDto = generateSwaggerRecordDtoForEntity(config.entity);
     const crudServiceModule = CrudServiceModule.forEntity(entity);
@@ -94,10 +92,53 @@ export class CrudControllerModule {
       @UseInterceptors(ClassSerializerInterceptor)
       @Get()
       @ApiQuery({
-        name: 'query',
-        title: 'Where criteria',
+        name: 'where',
         required: false,
-        type: () => ListQueryDto,
+        type: 'string',
+        description: 'Filter criteria as JSON string',
+        example: '{"name":"John","age":{">=":18}}',
+      })
+      @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: 'number',
+        description: 'Maximum number of records to return',
+        example: 10,
+      })
+      @ApiQuery({
+        name: 'skip',
+        required: false,
+        type: 'number',
+        description: 'Number of records to skip',
+        example: 0,
+      })
+      @ApiQuery({
+        name: 'sort',
+        required: false,
+        type: 'string',
+        description: 'Sort criteria (field ASC|DESC)',
+        example: 'id DESC',
+      })
+      @ApiQuery({
+        name: 'select',
+        required: false,
+        type: 'string',
+        description: 'Fields to select (comma-separated)',
+        example: 'id,name,email',
+      })
+      @ApiQuery({
+        name: 'omit',
+        required: false,
+        type: 'string',
+        description: 'Fields to omit (comma-separated)',
+        example: 'password,createdAt',
+      })
+      @ApiQuery({
+        name: 'populate',
+        required: false,
+        type: 'string',
+        description: 'Relations to populate (comma-separated)',
+        example: 'user,category',
       })
       @ApiOkResponse({ type: RecordDto, isArray: true })
       async find(@Query() query?: ListQueryParamsRequestDto): Promise<T[]> {
@@ -107,10 +148,11 @@ export class CrudControllerModule {
 
       @Get('count')
       @ApiQuery({
-        name: 'query',
-        title: 'Where criteria',
+        name: 'where',
         required: false,
-        type: () => CountQueryDto,
+        type: 'string',
+        description: 'Filter criteria as JSON string',
+        example: '{"name":"John","age":{">=":18}}',
       })
       async count(@Query() query: CountRequestDto = {}): Promise<{ count: number }> {
         if (!count) throw new ForbiddenException();
