@@ -211,11 +211,11 @@ export class CrudService<T extends CrudEntity> {
     const columnData: Partial<T> = {};
     const relationData: Partial<T> = {};
 
-    for (const key in entityData) {
+    for (const [key, value] of Object.entries(entityData)) {
       if (relationPropertyNames.has(key)) {
-        relationData[key] = entityData[key];
+        relationData[key as keyof T] = value;
       } else {
-        columnData[key] = entityData[key];
+        columnData[key as keyof T] = value;
       }
     }
 
