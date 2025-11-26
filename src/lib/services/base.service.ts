@@ -94,7 +94,33 @@ export class CrudService<T extends CrudEntity> {
       throw new NotFoundException(`Entity with id ${id} not found`);
     }
 
-    await this.repository.update(id, entityData as QueryDeepPartialEntity<T>);
+    // Separate relation fields from column fields
+    const relationPropertyNames = this.repository.metadata.relations.map(rel => rel.propertyName);
+    const columnData: Partial<T> = {};
+    const relationData: Partial<T> = {};
+
+    for (const key in entityData) {
+      if (relationPropertyNames.includes(key)) {
+        relationData[key] = entityData[key];
+      } else {
+        columnData[key] = entityData[key];
+      }
+    }
+
+    // Update columns using repository.update if there are any column updates
+    if (Object.keys(columnData).length > 0) {
+      await this.repository.update(id, columnData as QueryDeepPartialEntity<T>);
+    }
+
+    // If there are relation updates, we need to load the entity and save it
+    if (Object.keys(relationData).length > 0) {
+      const entityToUpdate = await this.repository.findOne({ where: { id } as FindOptionsWhere<T> });
+      if (entityToUpdate) {
+        Object.assign(entityToUpdate, relationData);
+        await this.repository.save(entityToUpdate);
+      }
+    }
+
     return this.findOne(id);
   }
 
@@ -123,10 +149,36 @@ export class CrudService<T extends CrudEntity> {
   async bulkUpdate(ids: number[], entityData: Partial<T>): Promise<T[]> {
     this.logger.debug(`Bulk updating entities ${ids.join(', ')} with data:`, entityData);
 
-    await this.repository.update(
-      { id: In(ids) } as FindOptionsWhere<T>,
-      entityData as QueryDeepPartialEntity<T>,
-    );
+    // Separate relation fields from column fields
+    const relationPropertyNames = this.repository.metadata.relations.map(rel => rel.propertyName);
+    const columnData: Partial<T> = {};
+    const relationData: Partial<T> = {};
+
+    for (const key in entityData) {
+      if (relationPropertyNames.includes(key)) {
+        relationData[key] = entityData[key];
+      } else {
+        columnData[key] = entityData[key];
+      }
+    }
+
+    // Update columns using repository.update if there are any column updates
+    if (Object.keys(columnData).length > 0) {
+      await this.repository.update(
+        { id: In(ids) } as FindOptionsWhere<T>,
+        columnData as QueryDeepPartialEntity<T>,
+      );
+    }
+
+    // If there are relation updates, we need to load entities and save them
+    if (Object.keys(relationData).length > 0) {
+      const entitiesToUpdate = await this.repository.find({ where: { id: In(ids) } as FindOptionsWhere<T> });
+      for (const entity of entitiesToUpdate) {
+        Object.assign(entity, relationData);
+      }
+      await this.repository.save(entitiesToUpdate);
+    }
+
     return this.findByIds(ids);
   }
 
