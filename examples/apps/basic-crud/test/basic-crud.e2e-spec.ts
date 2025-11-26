@@ -14,6 +14,14 @@ type UserResponse = {
   email: string;
   age: number | null;
   status: string;
+  organizationId?: number | null;
+  organization?: OrganizationResponse;
+};
+
+type OrganizationResponse = {
+  id: number;
+  name: string;
+  description?: string | null;
 };
 
 describe('Basic CRUD example (e2e)', () => {
@@ -339,5 +347,91 @@ describe('Basic CRUD example (e2e)', () => {
 
     const names = matchingUsers.map(item => item.name);
     expect(names).toEqual(expect.arrayContaining(['Carol', 'Dave']));
+  });
+
+  it('supports organization-user relationship with proper foreign key handling', async () => {
+    // Create an organization
+    const createOrgResponse = await request(context.httpServer)
+      .post('/organizations')
+      .send({
+        name: 'Tech Corp',
+        description: 'A technology company',
+      })
+      .expect(201);
+
+    const orgId = createOrgResponse.body.id;
+    expect(orgId).toBeDefined();
+    expect(createOrgResponse.body).toMatchObject({
+      name: 'Tech Corp',
+      description: 'A technology company',
+    });
+
+    // Create a user with organizationId
+    const createUserResponse = await request(context.httpServer)
+      .post('/users')
+      .send({
+        name: 'John Doe',
+        email: 'john@techcorp.com',
+        age: 30,
+        status: 'active',
+        organizationId: orgId,
+      })
+      .expect(201);
+
+    const userId = createUserResponse.body.id;
+    expect(userId).toBeDefined();
+    expect(createUserResponse.body).toMatchObject({
+      name: 'John Doe',
+      email: 'john@techcorp.com',
+      organizationId: orgId,
+    });
+
+    // Get user and verify organization is populated (not overwritten by ID)
+    const getUserResponse = await request(context.httpServer)
+      .get(`/users/${userId}`)
+      .query({ populate: 'organization' })
+      .expect(200);
+
+    expect(getUserResponse.body).toMatchObject({
+      id: userId,
+      name: 'John Doe',
+      organizationId: orgId,
+    });
+
+    // Verify organization object is populated and not overwritten by its ID
+    expect(getUserResponse.body.organization).toBeDefined();
+    expect(getUserResponse.body.organization).toMatchObject({
+      id: orgId,
+      name: 'Tech Corp',
+      description: 'A technology company',
+    });
+    expect(typeof getUserResponse.body.organization).toBe('object');
+    expect(typeof getUserResponse.body.organization.id).toBe('number');
+
+    // Update user's organization
+    const anotherOrgResponse = await request(context.httpServer)
+      .post('/organizations')
+      .send({
+        name: 'Another Corp',
+      })
+      .expect(201);
+
+    const anotherOrgId = anotherOrgResponse.body.id;
+
+    await request(context.httpServer)
+      .patch(`/users/${userId}`)
+      .send({ organizationId: anotherOrgId })
+      .expect(200);
+
+    const updatedUserResponse = await request(context.httpServer)
+      .get(`/users/${userId}`)
+      .query({ populate: 'organization' })
+      .expect(200);
+
+    expect(updatedUserResponse.body.organizationId).toBe(anotherOrgId);
+    expect(updatedUserResponse.body.organization).toMatchObject({
+      id: anotherOrgId,
+      name: 'Another Corp',
+    });
   });
 });
