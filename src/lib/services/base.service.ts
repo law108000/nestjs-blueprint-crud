@@ -9,9 +9,23 @@ import type { Criteria } from '../interfaces/crud.interfaces';
 export class CrudService<T extends CrudEntity> {
   private repository: Repository<T>;
   protected readonly logger = new Logger(CrudService.name);
+  private relationPropertyNames: Set<string> | null = null;
 
   constructor(private readonly waterlineQueryService: WaterlineQueryService<T>) {
     this.repository = waterlineQueryService.getRepository();
+  }
+
+  /**
+   * Lazily initializes and returns the set of relation property names.
+   * This is cached to avoid repeated metadata traversal.
+   */
+  private getRelationPropertyNames(): Set<string> {
+    if (this.relationPropertyNames === null) {
+      this.relationPropertyNames = new Set(
+        this.repository.metadata.relations.map(rel => rel.propertyName)
+      );
+    }
+    return this.relationPropertyNames;
   }
 
   async findOne(id: number, populate?: string, select?: string, omit?: string): Promise<T> {
@@ -193,12 +207,12 @@ export class CrudService<T extends CrudEntity> {
     columnData: Partial<T>;
     relationData: Partial<T>;
   } {
-    const relationPropertyNames = this.repository.metadata.relations.map(rel => rel.propertyName);
+    const relationPropertyNames = this.getRelationPropertyNames();
     const columnData: Partial<T> = {};
     const relationData: Partial<T> = {};
 
     for (const key in entityData) {
-      if (relationPropertyNames.includes(key)) {
+      if (relationPropertyNames.has(key)) {
         relationData[key] = entityData[key];
       } else {
         columnData[key] = entityData[key];
