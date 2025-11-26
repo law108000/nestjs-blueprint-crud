@@ -213,7 +213,7 @@ describe('Swagger Schema References', () => {
     // Save the document to a file for inspection
     try {
       fs.writeFileSync('/tmp/swagger-test.json', JSON.stringify(document, null, 2));
-    } catch (e) {
+    } catch {
       // Ignore file write errors
     }
 
