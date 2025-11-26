@@ -7,30 +7,9 @@ import type { CrudEntity } from '../entities/base.entity';
 const SERIALIZE_PROPERTY_METADATA_KEY = 'SERIALIZE_PROPERTY_METADATA_KEY';
 
 const listOfRecordsDto: { [entityName: string]: any } = {};
-const pendingResolutions: { [entityName: string]: Array<() => void> } = {};
 
 function registerDTO(entityName: string, model: any): void {
   listOfRecordsDto[entityName] = model;
-
-  if (pendingResolutions[entityName]?.length) {
-    delete pendingResolutions[entityName];
-  }
-}
-
-function waitForDTO(entityName: string): Promise<any> {
-  if (listOfRecordsDto[entityName]) {
-    return Promise.resolve(listOfRecordsDto[entityName]);
-  }
-
-  return new Promise(resolve => {
-    if (!pendingResolutions[entityName]) {
-      pendingResolutions[entityName] = [];
-    }
-
-    pendingResolutions[entityName].push(() => {
-      resolve(listOfRecordsDto[entityName]);
-    });
-  });
 }
 
 export type SerializePropertyOptions = ApiResponseOptions & {
@@ -77,7 +56,9 @@ export function TransformToISO8601() {
 export function TransformToEntity(entityName: string) {
   return applyDecorators(
     Exclude(),
-    ApiResponseProperty({ type: () => waitForDTO(entityName) }),
+    // Use synchronous DTO resolution to avoid empty $ref in Swagger schemas
+    // The DTO must be registered before this decorator is evaluated during schema generation
+    ApiResponseProperty({ type: () => listOfRecordsDto[entityName] || Object }),
     Transform(
       ({ value }) => {
         return new listOfRecordsDto[entityName](value);
