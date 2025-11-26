@@ -110,14 +110,14 @@ export class User extends CrudEntity {
   })
   organizationId?: number;
 
-  @ManyToOne(() => Organization, (org) => org.users)
+  @ManyToOne(() => Organization, (org) => org.users, { nullable: true })
   @JoinColumn({ name: 'organizationId' })
   @CreateProperty({
-    description: 'User organization ID',
+    description: 'User organization',
     required: false,
   })
   @UpdateProperty({
-    description: 'User organization ID',
+    description: 'User organization',
     required: false,
   })
   @QueryProperty({
