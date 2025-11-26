@@ -15,7 +15,7 @@ class Organization extends CrudEntity {
   @CrudProperty({ description: 'Organization name' })
   name!: string;
 
-  @ManyToOne(() => Organization, (org) => org.children, { nullable: true })
+  @ManyToOne(() => Organization, org => org.children, { nullable: true })
   @JoinColumn({ name: 'parentId' })
   @SerializeProperty({
     isEntity: true,
@@ -24,7 +24,7 @@ class Organization extends CrudEntity {
   })
   parent?: Organization | null;
 
-  @OneToMany(() => Organization, (org) => org.parent)
+  @OneToMany(() => Organization, org => org.parent)
   @SerializeProperty({
     isEntity: true,
     entityName: 'Organization',
@@ -32,7 +32,7 @@ class Organization extends CrudEntity {
   })
   children!: Organization[];
 
-  @OneToMany(() => User, (user) => user.organization)
+  @OneToMany(() => User, user => user.organization)
   @SerializeProperty({
     isEntity: true,
     entityName: 'User',
@@ -50,7 +50,7 @@ class User extends CrudEntity {
   @CrudProperty({ description: 'User name' })
   name!: string;
 
-  @ManyToOne(() => Organization, (org) => org.users, { nullable: true })
+  @ManyToOne(() => Organization, org => org.users, { nullable: true })
   @JoinColumn({ name: 'organizationId' })
   @SerializeProperty({
     isEntity: true,
@@ -62,7 +62,7 @@ class User extends CrudEntity {
   @Column({ nullable: true })
   organizationId?: number | null;
 
-  @OneToMany(() => Role, (role) => role.user)
+  @OneToMany(() => Role, role => role.user)
   @SerializeProperty({
     isEntity: true,
     entityName: 'Role',
@@ -77,7 +77,7 @@ class Role extends CrudEntity {
   @CrudProperty({ description: 'Role name' })
   name!: string;
 
-  @ManyToOne(() => User, (user) => user.roles)
+  @ManyToOne(() => User, user => user.roles)
   @JoinColumn({ name: 'userId' })
   @SerializeProperty({
     isEntity: true,
@@ -89,7 +89,7 @@ class Role extends CrudEntity {
   @Column()
   userId!: number;
 
-  @OneToMany(() => Permission, (permission) => permission.role)
+  @OneToMany(() => Permission, permission => permission.role)
   @SerializeProperty({
     isEntity: true,
     entityName: 'Permission',
@@ -104,7 +104,7 @@ class Permission extends CrudEntity {
   @CrudProperty({ description: 'Permission name' })
   name!: string;
 
-  @ManyToOne(() => Role, (role) => role.permissions)
+  @ManyToOne(() => Role, role => role.permissions)
   @JoinColumn({ name: 'roleId' })
   @SerializeProperty({
     isEntity: true,
