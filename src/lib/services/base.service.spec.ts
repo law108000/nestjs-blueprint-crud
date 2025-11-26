@@ -330,7 +330,7 @@ describe('CrudService', () => {
       const updateArgs = mockRepository.update.mock.calls[0][0];
       expect(updateArgs.id).toBeDefined();
       expect(mockRepository.update.mock.calls[0][1]).toEqual({ status: 'active' });
-      
+
       // Should save relation fields separately
       expect(mockRepository.find).toHaveBeenCalled();
       expect(mockRepository.save).toHaveBeenCalledWith(entities);
@@ -354,7 +354,7 @@ describe('CrudService', () => {
 
       // Should not call repository.update when there are no column updates
       expect(mockRepository.update).not.toHaveBeenCalled();
-      
+
       // Should save relation fields
       expect(mockRepository.find).toHaveBeenCalled();
       expect(mockRepository.save).toHaveBeenCalledWith(entities);

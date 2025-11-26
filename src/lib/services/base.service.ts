@@ -22,7 +22,7 @@ export class CrudService<T extends CrudEntity> {
   private getRelationPropertyNames(): Set<string> {
     if (this.relationPropertyNames === null) {
       this.relationPropertyNames = new Set(
-        this.repository.metadata.relations.map(rel => rel.propertyName)
+        this.repository.metadata.relations.map(rel => rel.propertyName),
       );
     }
     return this.relationPropertyNames;
@@ -163,7 +163,9 @@ export class CrudService<T extends CrudEntity> {
 
     // If there are relation updates, we need to load entities and save them
     if (Object.keys(relationData).length > 0) {
-      const entitiesToUpdate = await this.repository.find({ where: { id: In(ids) } as FindOptionsWhere<T> });
+      const entitiesToUpdate = await this.repository.find({
+        where: { id: In(ids) } as FindOptionsWhere<T>,
+      });
       for (const entity of entitiesToUpdate) {
         Object.assign(entity, relationData);
       }
