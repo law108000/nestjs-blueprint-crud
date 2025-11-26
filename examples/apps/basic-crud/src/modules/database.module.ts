@@ -3,13 +3,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Order } from '../entities/order.entity';
 import { User } from '../entities/user.entity';
+import { Organization } from '../entities/organization.entity';
 
 const dbType = process.env.DB_TYPE ?? 'mysql';
 
 const getTypeOrmConfig = () => {
   const baseConfig = {
     type: dbType as any,
-    entities: [User, Order],
+    entities: [User, Order, Organization],
     synchronize: true, // Only use in development environment
     logging: process.env.NODE_ENV !== 'test',
   };
