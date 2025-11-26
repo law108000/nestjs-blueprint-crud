@@ -95,30 +95,17 @@ export class CrudService<T extends CrudEntity> {
     }
 
     // Separate relation fields from column fields
-    const relationPropertyNames = this.repository.metadata.relations.map(rel => rel.propertyName);
-    const columnData: Partial<T> = {};
-    const relationData: Partial<T> = {};
-
-    for (const key in entityData) {
-      if (relationPropertyNames.includes(key)) {
-        relationData[key] = entityData[key];
-      } else {
-        columnData[key] = entityData[key];
-      }
-    }
+    const { columnData, relationData } = this.separateColumnsAndRelations(entityData);
 
     // Update columns using repository.update if there are any column updates
     if (Object.keys(columnData).length > 0) {
       await this.repository.update(id, columnData as QueryDeepPartialEntity<T>);
     }
 
-    // If there are relation updates, we need to load the entity and save it
+    // If there are relation updates, we need to use the existing entity and save it
     if (Object.keys(relationData).length > 0) {
-      const entityToUpdate = await this.repository.findOne({ where: { id } as FindOptionsWhere<T> });
-      if (entityToUpdate) {
-        Object.assign(entityToUpdate, relationData);
-        await this.repository.save(entityToUpdate);
-      }
+      Object.assign(existingEntity, relationData);
+      await this.repository.save(existingEntity as any);
     }
 
     return this.findOne(id);
@@ -150,17 +137,7 @@ export class CrudService<T extends CrudEntity> {
     this.logger.debug(`Bulk updating entities ${ids.join(', ')} with data:`, entityData);
 
     // Separate relation fields from column fields
-    const relationPropertyNames = this.repository.metadata.relations.map(rel => rel.propertyName);
-    const columnData: Partial<T> = {};
-    const relationData: Partial<T> = {};
-
-    for (const key in entityData) {
-      if (relationPropertyNames.includes(key)) {
-        relationData[key] = entityData[key];
-      } else {
-        columnData[key] = entityData[key];
-      }
-    }
+    const { columnData, relationData } = this.separateColumnsAndRelations(entityData);
 
     // Update columns using repository.update if there are any column updates
     if (Object.keys(columnData).length > 0) {
@@ -205,5 +182,29 @@ export class CrudService<T extends CrudEntity> {
 
     await this.repository.restore(id);
     return this.findOne(id);
+  }
+
+  /**
+   * Separates entity data into column fields and relation fields.
+   * Column fields can be updated using repository.update() for efficiency,
+   * while relation fields need to be handled with repository.save().
+   */
+  private separateColumnsAndRelations(entityData: Partial<T>): {
+    columnData: Partial<T>;
+    relationData: Partial<T>;
+  } {
+    const relationPropertyNames = this.repository.metadata.relations.map(rel => rel.propertyName);
+    const columnData: Partial<T> = {};
+    const relationData: Partial<T> = {};
+
+    for (const key in entityData) {
+      if (relationPropertyNames.includes(key)) {
+        relationData[key] = entityData[key];
+      } else {
+        columnData[key] = entityData[key];
+      }
+    }
+
+    return { columnData, relationData };
   }
 }

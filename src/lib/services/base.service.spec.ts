@@ -214,15 +214,13 @@ describe('CrudService', () => {
         .mockResolvedValueOnce([existingEntity])
         .mockResolvedValueOnce([updatedEntity]);
       mockRepository.update.mockResolvedValue({});
-      mockRepository.findOne.mockResolvedValue(existingEntity);
       mockRepository.save.mockResolvedValue(updatedEntity);
 
       const result = await service.update(id, entityData);
 
       // Should only update column fields with repository.update
       expect(mockRepository.update).toHaveBeenCalledWith(id, { name: 'updated' });
-      // Should save relation fields separately
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: 10 } });
+      // Should save relation fields separately using the existing entity
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result).toEqual(updatedEntity);
     });
@@ -236,15 +234,13 @@ describe('CrudService', () => {
       mockWaterlineQueryService.findWithModifiers
         .mockResolvedValueOnce([existingEntity])
         .mockResolvedValueOnce([updatedEntity]);
-      mockRepository.findOne.mockResolvedValue(existingEntity);
       mockRepository.save.mockResolvedValue(updatedEntity);
 
       const result = await service.update(id, entityData);
 
       // Should not call repository.update when there are no column updates
       expect(mockRepository.update).not.toHaveBeenCalled();
-      // Should save relation fields
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: 10 } });
+      // Should save relation fields using the existing entity
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result).toEqual(updatedEntity);
     });
