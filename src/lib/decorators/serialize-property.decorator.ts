@@ -56,6 +56,8 @@ export function TransformToISO8601() {
 export function TransformToEntity(entityName: string) {
   return applyDecorators(
     Exclude(),
+    // Use synchronous DTO resolution to avoid empty $ref in Swagger schemas
+    // The DTO must be registered before this decorator is evaluated during schema generation
     ApiResponseProperty({ type: () => listOfRecordsDto[entityName] || Object }),
     Transform(
       ({ value }) => {
