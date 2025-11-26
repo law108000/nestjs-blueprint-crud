@@ -1,5 +1,5 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { CrudEntity, CrudProperty } from 'nestjs-blueprint-crud';
+import { CrudEntity, CrudProperty, SerializeProperty } from 'nestjs-blueprint-crud';
 import { User } from './user.entity';
 
 @Entity('organizations')
@@ -20,13 +20,10 @@ export class Organization extends CrudEntity {
   description?: string;
 
   @OneToMany(() => User, (user) => user.organization)
-  @CrudProperty({
+  @SerializeProperty({
     isEntity: true,
     entityName: 'User',
     description: 'Users in the organization',
-    serialize: true,
-    create: false,
-    update: false,
   })
   users!: User[];
 }

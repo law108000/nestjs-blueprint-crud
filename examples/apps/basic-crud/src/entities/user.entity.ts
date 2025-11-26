@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import {
   CrudEntity,
   CreateProperty,
@@ -89,11 +89,39 @@ export class User extends CrudEntity {
   status!: string;
 
   @Column({ nullable: true })
-  @CrudProperty({ description: 'Organization ID', serialize: false })
+  @CreateProperty({
+    description: 'Organization ID',
+    type: 'number',
+    example: 1,
+    required: false,
+  })
+  @UpdateProperty({
+    description: 'Organization ID',
+    type: 'number',
+    example: 1,
+    required: false,
+  })
+  @QueryProperty({
+    description: 'Organization ID',
+    type: 'number',
+  })
+  @SerializeProperty({
+    description: 'Organization ID',
+  })
   organizationId?: number;
 
   @ManyToOne(() => Organization, (org) => org.users)
-  @CrudProperty({ isEntity: true, entityName: 'Organization' })
+  @JoinColumn({ name: 'organizationId' })
+  @QueryProperty({
+    isEntity: true,
+    entityName: 'Organization',
+    description: 'User organization',
+  })
+  @SerializeProperty({
+    isEntity: true,
+    entityName: 'Organization',
+    description: 'User organization',
+  })
   @Type(() => Organization)
   organization?: Organization;
 
