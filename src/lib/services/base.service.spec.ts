@@ -203,6 +203,47 @@ describe('CrudService', () => {
       expect(mockRepository.update).toHaveBeenCalledWith(id, entityData);
       expect(result).toEqual(updatedEntity);
     });
+
+    it('should handle updates with relation fields separately', async () => {
+      const id = 10;
+      const entityData = { name: 'updated', relation1: [1, 2] };
+      const existingEntity = { id, name: 'old' };
+      const updatedEntity = { id, name: 'updated', relation1: [1, 2] };
+
+      mockWaterlineQueryService.findWithModifiers
+        .mockResolvedValueOnce([existingEntity])
+        .mockResolvedValueOnce([updatedEntity]);
+      mockRepository.update.mockResolvedValue({});
+      mockRepository.save.mockResolvedValue(updatedEntity);
+
+      const result = await service.update(id, entityData);
+
+      // Should only update column fields with repository.update
+      expect(mockRepository.update).toHaveBeenCalledWith(id, { name: 'updated' });
+      // Should save relation fields separately using the existing entity
+      expect(mockRepository.save).toHaveBeenCalled();
+      expect(result).toEqual(updatedEntity);
+    });
+
+    it('should only use save when updating relations without column changes', async () => {
+      const id = 10;
+      const entityData = { relation1: [1, 2] };
+      const existingEntity = { id, name: 'old' };
+      const updatedEntity = { id, name: 'old', relation1: [1, 2] };
+
+      mockWaterlineQueryService.findWithModifiers
+        .mockResolvedValueOnce([existingEntity])
+        .mockResolvedValueOnce([updatedEntity]);
+      mockRepository.save.mockResolvedValue(updatedEntity);
+
+      const result = await service.update(id, entityData);
+
+      // Should not call repository.update when there are no column updates
+      expect(mockRepository.update).not.toHaveBeenCalled();
+      // Should save relation fields using the existing entity
+      expect(mockRepository.save).toHaveBeenCalled();
+      expect(result).toEqual(updatedEntity);
+    });
   });
 
   describe('remove', () => {
@@ -265,6 +306,58 @@ describe('CrudService', () => {
       expect(updateArgs.id).toBeDefined();
       expect(updateArgs.id).toHaveProperty('_value', ids);
       expect(mockRepository.update).toHaveBeenCalledWith(updateArgs, data);
+      expect(findByIdsSpy).toHaveBeenCalledWith(ids);
+      expect(result).toEqual(refreshed);
+
+      findByIdsSpy.mockRestore();
+    });
+
+    it('should handle bulk updates with relation fields separately', async () => {
+      const ids = [4, 5];
+      const data = { status: 'active', relation1: [1, 2] };
+      const entities = [{ id: 4 }, { id: 5 }];
+      const refreshed = [{ id: 4 }, { id: 5 }];
+
+      mockRepository.update.mockResolvedValue({});
+      mockRepository.find.mockResolvedValue(entities);
+      mockRepository.save.mockResolvedValue(entities);
+      const findByIdsSpy = jest.spyOn(service, 'findByIds').mockResolvedValue(refreshed as any);
+
+      const result = await service.bulkUpdate(ids, data);
+
+      // Should only update column fields with repository.update
+      expect(mockRepository.update).toHaveBeenCalled();
+      const updateArgs = mockRepository.update.mock.calls[0][0];
+      expect(updateArgs.id).toBeDefined();
+      expect(mockRepository.update.mock.calls[0][1]).toEqual({ status: 'active' });
+
+      // Should save relation fields separately
+      expect(mockRepository.find).toHaveBeenCalled();
+      expect(mockRepository.save).toHaveBeenCalledWith(entities);
+      expect(findByIdsSpy).toHaveBeenCalledWith(ids);
+      expect(result).toEqual(refreshed);
+
+      findByIdsSpy.mockRestore();
+    });
+
+    it('should only use save when bulk updating relations without column changes', async () => {
+      const ids = [4, 5];
+      const data = { relation1: [1, 2] };
+      const entities = [{ id: 4 }, { id: 5 }];
+      const refreshed = [{ id: 4 }, { id: 5 }];
+
+      mockRepository.find.mockResolvedValue(entities);
+      mockRepository.save.mockResolvedValue(entities);
+      const findByIdsSpy = jest.spyOn(service, 'findByIds').mockResolvedValue(refreshed as any);
+
+      const result = await service.bulkUpdate(ids, data);
+
+      // Should not call repository.update when there are no column updates
+      expect(mockRepository.update).not.toHaveBeenCalled();
+
+      // Should save relation fields
+      expect(mockRepository.find).toHaveBeenCalled();
+      expect(mockRepository.save).toHaveBeenCalledWith(entities);
       expect(findByIdsSpy).toHaveBeenCalledWith(ids);
       expect(result).toEqual(refreshed);
 

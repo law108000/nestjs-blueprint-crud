@@ -9,9 +9,23 @@ import type { Criteria } from '../interfaces/crud.interfaces';
 export class CrudService<T extends CrudEntity> {
   private repository: Repository<T>;
   protected readonly logger = new Logger(CrudService.name);
+  private relationPropertyNames: Set<string> | null = null;
 
   constructor(private readonly waterlineQueryService: WaterlineQueryService<T>) {
     this.repository = waterlineQueryService.getRepository();
+  }
+
+  /**
+   * Lazily initializes and returns the set of relation property names.
+   * This is cached to avoid repeated metadata traversal.
+   */
+  private getRelationPropertyNames(): Set<string> {
+    if (this.relationPropertyNames === null) {
+      this.relationPropertyNames = new Set(
+        this.repository.metadata.relations.map(rel => rel.propertyName),
+      );
+    }
+    return this.relationPropertyNames;
   }
 
   async findOne(id: number, populate?: string, select?: string, omit?: string): Promise<T> {
@@ -94,7 +108,20 @@ export class CrudService<T extends CrudEntity> {
       throw new NotFoundException(`Entity with id ${id} not found`);
     }
 
-    await this.repository.update(id, entityData as QueryDeepPartialEntity<T>);
+    // Separate relation fields from column fields
+    const { columnData, relationData } = this.separateColumnsAndRelations(entityData);
+
+    // Update columns using repository.update if there are any column updates
+    if (Object.keys(columnData).length > 0) {
+      await this.repository.update(id, columnData as QueryDeepPartialEntity<T>);
+    }
+
+    // If there are relation updates, we need to use the existing entity and save it
+    if (Object.keys(relationData).length > 0) {
+      Object.assign(existingEntity, relationData);
+      await this.repository.save(existingEntity as any);
+    }
+
     return this.findOne(id);
   }
 
@@ -123,10 +150,28 @@ export class CrudService<T extends CrudEntity> {
   async bulkUpdate(ids: number[], entityData: Partial<T>): Promise<T[]> {
     this.logger.debug(`Bulk updating entities ${ids.join(', ')} with data:`, entityData);
 
-    await this.repository.update(
-      { id: In(ids) } as FindOptionsWhere<T>,
-      entityData as QueryDeepPartialEntity<T>,
-    );
+    // Separate relation fields from column fields
+    const { columnData, relationData } = this.separateColumnsAndRelations(entityData);
+
+    // Update columns using repository.update if there are any column updates
+    if (Object.keys(columnData).length > 0) {
+      await this.repository.update(
+        { id: In(ids) } as FindOptionsWhere<T>,
+        columnData as QueryDeepPartialEntity<T>,
+      );
+    }
+
+    // If there are relation updates, we need to load entities and save them
+    if (Object.keys(relationData).length > 0) {
+      const entitiesToUpdate = await this.repository.find({
+        where: { id: In(ids) } as FindOptionsWhere<T>,
+      });
+      for (const entity of entitiesToUpdate) {
+        Object.assign(entity, relationData);
+      }
+      await this.repository.save(entitiesToUpdate);
+    }
+
     return this.findByIds(ids);
   }
 
@@ -153,5 +198,29 @@ export class CrudService<T extends CrudEntity> {
 
     await this.repository.restore(id);
     return this.findOne(id);
+  }
+
+  /**
+   * Separates entity data into column fields and relation fields.
+   * Column fields can be updated using repository.update() for efficiency,
+   * while relation fields need to be handled with repository.save().
+   */
+  private separateColumnsAndRelations(entityData: Partial<T>): {
+    columnData: Partial<T>;
+    relationData: Partial<T>;
+  } {
+    const relationPropertyNames = this.getRelationPropertyNames();
+    const columnData: Partial<T> = {};
+    const relationData: Partial<T> = {};
+
+    for (const [key, value] of Object.entries(entityData)) {
+      if (relationPropertyNames.has(key)) {
+        relationData[key as keyof T] = value;
+      } else {
+        columnData[key as keyof T] = value;
+      }
+    }
+
+    return { columnData, relationData };
   }
 }
