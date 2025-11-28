@@ -30,11 +30,7 @@ class TestDatabaseModule {
       metadata: {
         name: 'TestEntity',
         relations: [],
-        columns: [
-          { propertyPath: 'id' },
-          { propertyPath: 'name' },
-          { propertyPath: 'email' },
-        ],
+        columns: [{ propertyPath: 'id' }, { propertyPath: 'name' }, { propertyPath: 'email' }],
         findRelationWithPropertyPath: () => undefined,
         findColumnWithPropertyPath: () => ({}),
       },
