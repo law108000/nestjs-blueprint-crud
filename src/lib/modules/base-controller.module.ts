@@ -34,6 +34,124 @@ import {
 } from '../dtos/query.dto';
 import { ValidateIdPipe } from '../pipes/validate-id.pipe';
 
+const SERIALIZE_PROPERTY_METADATA_KEY = 'SERIALIZE_PROPERTY_METADATA_KEY';
+const QUERY_PROPERTY_METADATA_KEY = 'QUERY_PROPERTY_METADATA_KEY';
+
+interface EntityFieldInfo {
+  name: string;
+  type: string;
+  example?: unknown;
+  isRelation: boolean;
+}
+
+/**
+ * Extracts field information from entity metadata for generating Swagger examples
+ */
+function getEntityFieldsInfo<T extends CrudEntity>(entity: new () => T): EntityFieldInfo[] {
+  const fields: EntityFieldInfo[] = [];
+
+  // Get metadata keys from entity prototype
+  const metadataKeys = Reflect.getMetadataKeys(entity.prototype);
+
+  // Extract fields from SerializeProperty metadata
+  const serializeKeys = metadataKeys
+    .filter(key => key.toString().includes(`@${SERIALIZE_PROPERTY_METADATA_KEY}`))
+    .map(key => key.split('@')[0]);
+
+  // Extract fields from QueryProperty metadata
+  const queryKeys = metadataKeys
+    .filter(key => key.toString().includes(`@${QUERY_PROPERTY_METADATA_KEY}`))
+    .map(key => key.split('@')[0]);
+
+  // Combine unique field names (prioritize query fields as they're more relevant for filtering)
+  const fieldNames = [...new Set([...queryKeys, ...serializeKeys])];
+
+  for (const fieldName of fieldNames) {
+    // Get query property metadata if available
+    const queryMetadataKey = `${fieldName}@${QUERY_PROPERTY_METADATA_KEY}`;
+    const queryMetadata = Reflect.getMetadata(queryMetadataKey, entity.prototype) || {};
+
+    // Get serialize property metadata if available
+    const serializeMetadataKey = `${fieldName}@${SERIALIZE_PROPERTY_METADATA_KEY}`;
+    const serializeMetadata = Reflect.getMetadata(serializeMetadataKey, entity.prototype) || {};
+
+    // Get the design type
+    const designType = Reflect.getMetadata('design:type', entity.prototype, fieldName);
+    const typeName = designType?.name?.toLowerCase() || 'string';
+
+    const isRelation = queryMetadata.isEntity || serializeMetadata.isEntity || false;
+
+    fields.push({
+      name: fieldName,
+      type: typeName,
+      example: queryMetadata.example || serializeMetadata.example,
+      isRelation,
+    });
+  }
+
+  return fields;
+}
+
+/**
+ * Generates entity-specific Swagger examples for query parameters
+ */
+function generateEntityExamples<T extends CrudEntity>(entity: new () => T): {
+  whereExample: string;
+  sortExample: string;
+  selectExample: string;
+  omitExample: string;
+  populateExample: string;
+} {
+  const fields = getEntityFieldsInfo(entity);
+
+  // Filter out relations for most examples
+  const regularFields = fields.filter(f => !f.isRelation);
+  const relationFields = fields.filter(f => f.isRelation);
+
+  // Generate where example using the first couple of regular fields
+  let whereExample = '{}';
+  if (regularFields.length > 0) {
+    const whereObj: Record<string, unknown> = {};
+    const firstField = regularFields[0];
+    if (firstField.example !== undefined) {
+      whereObj[firstField.name] = firstField.example;
+    } else if (firstField.type === 'number') {
+      whereObj[firstField.name] = { '>=': 1 };
+    } else {
+      whereObj[firstField.name] = 'value';
+    }
+    whereExample = JSON.stringify(whereObj);
+  }
+
+  // Generate sort example using 'id' or the first field
+  const sortField = regularFields.find(f => f.name === 'id') || regularFields[0];
+  const sortExample = sortField ? `${sortField.name} DESC` : 'id DESC';
+
+  // Generate select example using first few regular field names
+  const selectFields = regularFields.slice(0, Math.min(3, regularFields.length));
+  const selectExample =
+    selectFields.length > 0 ? selectFields.map(f => f.name).join(',') : 'id,name';
+
+  // Generate omit example - typically timestamp fields or sensitive fields
+  const omitFields = regularFields
+    .filter(f => f.name.includes('At') || f.name.includes('password') || f.name.includes('secret'))
+    .slice(0, 2);
+  const omitExample =
+    omitFields.length > 0 ? omitFields.map(f => f.name).join(',') : 'createdAt,updatedAt';
+
+  // Generate populate example using relation field names
+  const populateExample =
+    relationFields.length > 0 ? relationFields.map(f => f.name).join(',') : '';
+
+  return {
+    whereExample,
+    sortExample,
+    selectExample,
+    omitExample,
+    populateExample,
+  };
+}
+
 export interface CrudControllerConfig<T extends CrudEntity> {
   entity: new () => T;
   prefix: string;
@@ -79,6 +197,10 @@ export class CrudControllerModule {
     const crudServiceProviders = toArray(crudServiceModule.providers);
     const crudServiceExports = toArray(crudServiceModule.exports);
 
+    // Generate entity-specific examples for query parameters
+    const { whereExample, sortExample, selectExample, omitExample, populateExample } =
+      generateEntityExamples(entity);
+
     @Controller({ path: prefix })
     @ApiTags(tagName)
     class DynamicCrudController extends CrudController<T> {
@@ -96,7 +218,7 @@ export class CrudControllerModule {
         required: false,
         type: 'string',
         description: 'Filter criteria as JSON string',
-        example: '{"name":"John","age":{">=":18}}',
+        example: whereExample,
       })
       @ApiQuery({
         name: 'limit',
@@ -117,28 +239,28 @@ export class CrudControllerModule {
         required: false,
         type: 'string',
         description: 'Sort criteria (field ASC|DESC)',
-        example: 'id DESC',
+        example: sortExample,
       })
       @ApiQuery({
         name: 'select',
         required: false,
         type: 'string',
         description: 'Fields to select (comma-separated)',
-        example: 'id,name,email',
+        example: selectExample,
       })
       @ApiQuery({
         name: 'omit',
         required: false,
         type: 'string',
         description: 'Fields to omit (comma-separated)',
-        example: 'password,createdAt',
+        example: omitExample,
       })
       @ApiQuery({
         name: 'populate',
         required: false,
         type: 'string',
         description: 'Relations to populate (comma-separated)',
-        example: 'user,category',
+        example: populateExample || undefined,
       })
       @ApiOkResponse({ type: RecordDto, isArray: true })
       async find(@Query() query?: ListQueryParamsRequestDto): Promise<T[]> {
@@ -152,7 +274,7 @@ export class CrudControllerModule {
         required: false,
         type: 'string',
         description: 'Filter criteria as JSON string',
-        example: '{"name":"John","age":{">=":18}}',
+        example: whereExample,
       })
       async count(@Query() query: CountRequestDto = {}): Promise<{ count: number }> {
         if (!count) throw new ForbiddenException();
