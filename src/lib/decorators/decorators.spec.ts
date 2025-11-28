@@ -275,4 +275,51 @@ describe('Custom decorators', () => {
       expect(expectedToken).toBe('TestEntityCrudService');
     });
   });
+
+  describe('CrudEntity base class default columns', () => {
+    it('should include id, createdAt, updatedAt, deletedAt in RecordDto by default', () => {
+      // Create an entity that only has additional properties
+      class SimpleEntity extends CrudEntity {
+        customField!: string;
+      }
+
+      // Apply SerializeProperty to the custom field
+      SerializeProperty({
+        description: 'Custom field',
+        type: 'string',
+      })(SimpleEntity.prototype, 'customField');
+
+      // Generate the RecordDto
+      const RecordDto = generateSwaggerRecordDtoForEntity(SimpleEntity)!;
+
+      // Get the metadata keys to verify which properties are included
+      const metadataKeys = Reflect.getMetadataKeys(SimpleEntity.prototype)
+        .filter(key => key.toString().includes('@SERIALIZE_PROPERTY_METADATA_KEY'))
+        .map(key => key.split('@')[0]);
+
+      // Verify that the base entity columns are included
+      expect(metadataKeys).toContain('id');
+      expect(metadataKeys).toContain('createdAt');
+      expect(metadataKeys).toContain('updatedAt');
+      expect(metadataKeys).toContain('deletedAt');
+      expect(metadataKeys).toContain('customField');
+
+      // Create an instance and verify serialization works
+      const record = new RecordDto({
+        id: 1,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        deletedAt: null,
+        customField: 'test value',
+      });
+
+      const plain = instanceToPlain(record);
+
+      expect(plain.id).toBe(1);
+      expect(plain.createdAt).toBeDefined();
+      expect(plain.updatedAt).toBeDefined();
+      expect(plain.deletedAt).toBeNull();
+      expect(plain.customField).toBe('test value');
+    });
+  });
 });
