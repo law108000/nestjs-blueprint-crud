@@ -118,6 +118,8 @@ export function generateSwaggerRecordDtoForEntity(target: new () => CrudEntity) 
     ) as SerializePropertyOptions;
     const { isISO8601, isTimestamp, isEntity, entityName, ...rest } = metadata;
     const propertyType = Reflect.getMetadata('design:type', target.prototype, propertyKey);
+    // Extract type from metadata if specified, use reflected type as fallback
+    const specifiedType = (metadata as { type?: unknown }).type;
 
     Expose()(RecordDto.prototype, propertyKey);
     if (isISO8601) {
@@ -129,7 +131,7 @@ export function generateSwaggerRecordDtoForEntity(target: new () => CrudEntity) 
     } else {
       ApiResponseProperty({
         ...rest,
-        type: propertyType,
+        type: specifiedType || propertyType,
       })(RecordDto.prototype, propertyKey);
     }
   }

@@ -61,6 +61,7 @@ export abstract class CrudEntity {
   @IsOptional()
   @SerializeProperty({
     description: 'Record creation timestamp',
+    type: 'number',
   })
   createdAt?: number;
 
@@ -70,6 +71,7 @@ export abstract class CrudEntity {
   @IsOptional()
   @SerializeProperty({
     description: 'Record last update timestamp',
+    type: 'number',
   })
   updatedAt?: number;
 
@@ -79,6 +81,7 @@ export abstract class CrudEntity {
   @IsOptional()
   @SerializeProperty({
     description: 'Record deletion timestamp (soft delete)',
+    type: 'number',
   })
   deletedAt?: number | null;
 }
