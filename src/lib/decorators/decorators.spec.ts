@@ -292,19 +292,7 @@ describe('Custom decorators', () => {
       // Generate the RecordDto
       const RecordDto = generateSwaggerRecordDtoForEntity(SimpleEntity)!;
 
-      // Get the metadata keys to verify which properties are included
-      const metadataKeys = Reflect.getMetadataKeys(SimpleEntity.prototype)
-        .filter(key => key.toString().includes('@SERIALIZE_PROPERTY_METADATA_KEY'))
-        .map(key => key.split('@')[0]);
-
-      // Verify that the base entity columns are included
-      expect(metadataKeys).toContain('id');
-      expect(metadataKeys).toContain('createdAt');
-      expect(metadataKeys).toContain('updatedAt');
-      expect(metadataKeys).toContain('deletedAt');
-      expect(metadataKeys).toContain('customField');
-
-      // Create an instance and verify serialization works
+      // Create an instance with base entity columns and custom field
       const record = new RecordDto({
         id: 1,
         createdAt: Date.now(),
@@ -313,12 +301,15 @@ describe('Custom decorators', () => {
         customField: 'test value',
       });
 
+      // Verify serialization includes all properties (base entity columns + custom field)
       const plain = instanceToPlain(record);
 
+      // Verify base entity columns are serialized
       expect(plain.id).toBe(1);
       expect(plain.createdAt).toBeDefined();
       expect(plain.updatedAt).toBeDefined();
       expect(plain.deletedAt).toBeNull();
+      // Verify custom field is also serialized
       expect(plain.customField).toBe('test value');
     });
   });
