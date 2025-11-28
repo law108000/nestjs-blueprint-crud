@@ -275,4 +275,42 @@ describe('Custom decorators', () => {
       expect(expectedToken).toBe('TestEntityCrudService');
     });
   });
+
+  describe('CrudEntity base class default columns', () => {
+    it('should include id, createdAt, updatedAt, deletedAt in RecordDto by default', () => {
+      // Create an entity that only has additional properties
+      class SimpleEntity extends CrudEntity {
+        customField!: string;
+      }
+
+      // Apply SerializeProperty to the custom field
+      SerializeProperty({
+        description: 'Custom field',
+        type: 'string',
+      })(SimpleEntity.prototype, 'customField');
+
+      // Generate the RecordDto
+      const RecordDto = generateSwaggerRecordDtoForEntity(SimpleEntity)!;
+
+      // Create an instance with base entity columns and custom field
+      const record = new RecordDto({
+        id: 1,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        deletedAt: null,
+        customField: 'test value',
+      });
+
+      // Verify serialization includes all properties (base entity columns + custom field)
+      const plain = instanceToPlain(record);
+
+      // Verify base entity columns are serialized
+      expect(plain.id).toBe(1);
+      expect(plain.createdAt).toBeDefined();
+      expect(plain.updatedAt).toBeDefined();
+      expect(plain.deletedAt).toBeNull();
+      // Verify custom field is also serialized
+      expect(plain.customField).toBe('test value');
+    });
+  });
 });

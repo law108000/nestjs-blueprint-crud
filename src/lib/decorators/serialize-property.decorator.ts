@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { applyDecorators } from '@nestjs/common';
+import { applyDecorators, type Type } from '@nestjs/common';
 import { ApiResponseProperty, PickType, type ApiResponseOptions } from '@nestjs/swagger';
 import { Expose, Transform, Exclude } from 'class-transformer';
 import type { CrudEntity } from '../entities/base.entity';
@@ -13,6 +13,8 @@ function registerDTO(entityName: string, model: any): void {
 }
 
 export type SerializePropertyOptions = ApiResponseOptions & {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+  type?: Type<unknown> | Function | [Function] | string;
   isEntity?: boolean;
   entityName?: string;
   isISO8601?: boolean;
@@ -116,7 +118,7 @@ export function generateSwaggerRecordDtoForEntity(target: new () => CrudEntity) 
       target.prototype,
       propertyKey,
     ) as SerializePropertyOptions;
-    const { isISO8601, isTimestamp, isEntity, entityName, ...rest } = metadata;
+    const { isISO8601, isTimestamp, isEntity, entityName, type: specifiedType, ...rest } = metadata;
     const propertyType = Reflect.getMetadata('design:type', target.prototype, propertyKey);
 
     Expose()(RecordDto.prototype, propertyKey);
@@ -129,7 +131,7 @@ export function generateSwaggerRecordDtoForEntity(target: new () => CrudEntity) 
     } else {
       ApiResponseProperty({
         ...rest,
-        type: propertyType,
+        type: specifiedType || propertyType,
       })(RecordDto.prototype, propertyKey);
     }
   }

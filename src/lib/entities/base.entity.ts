@@ -5,6 +5,7 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 import { IsOptional } from 'class-validator';
+import { SerializeProperty } from '../decorators/serialize-property.decorator';
 
 /**
  * Base entity class providing common fields and functionality for all entities
@@ -47,6 +48,10 @@ import { IsOptional } from 'class-validator';
  */
 export abstract class CrudEntity {
   @PrimaryGeneratedColumn()
+  @SerializeProperty({
+    description: 'Unique identifier',
+    type: 'number',
+  })
   id!: number;
 
   // Optional timestamp fields - can be overridden by extending classes
@@ -54,17 +59,29 @@ export abstract class CrudEntity {
     comment: 'Record creation timestamp',
   })
   @IsOptional()
+  @SerializeProperty({
+    description: 'Record creation timestamp',
+    type: 'number',
+  })
   createdAt?: number;
 
   @UpdateDateColumn({
     comment: 'Record last update timestamp',
   })
   @IsOptional()
+  @SerializeProperty({
+    description: 'Record last update timestamp',
+    type: 'number',
+  })
   updatedAt?: number;
 
   @DeleteDateColumn({
     comment: 'Record deletion timestamp (soft delete)',
   })
   @IsOptional()
+  @SerializeProperty({
+    description: 'Record deletion timestamp (soft delete)',
+    type: 'number',
+  })
   deletedAt?: number | null;
 }
