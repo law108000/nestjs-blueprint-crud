@@ -18,7 +18,7 @@ import {
   HttpCode,
   type DynamicModule,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import type { CrudEntity } from '../entities/base.entity';
 import { CrudController } from '../controllers/base.controller';
 import { CrudServiceModule, getCrudServiceInjectToken } from './base-service.module';
@@ -189,6 +189,7 @@ export class CrudControllerModule {
           transformOptions: { exposeUnsetFields: false, strategy: 'excludeAll' },
         }),
       )
+      @ApiBody({ type: CreateDto })
       @ApiOkResponse({ type: RecordDto })
       async create(@Body() entity: CreateRequestDto = new CreateDto()): Promise<T> {
         if (!create) throw new ForbiddenException();
@@ -197,6 +198,7 @@ export class CrudControllerModule {
 
       @UseInterceptors(ClassSerializerInterceptor)
       @Patch('bulk')
+      @ApiBody({ type: UpdateDto })
       @ApiOkResponse({ type: [RecordDto] })
       async bulkUpdate(
         @Query() query: Record<string, string>,
@@ -217,6 +219,7 @@ export class CrudControllerModule {
           transformOptions: { exposeUnsetFields: false, strategy: 'excludeAll' },
         }),
       )
+      @ApiBody({ type: UpdateDto })
       @ApiOkResponse({ type: RecordDto })
       async update(
         @Param('id', ValidateIdPipe) id: number,
