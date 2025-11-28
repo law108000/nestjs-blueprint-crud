@@ -34,6 +34,9 @@ import {
 } from '../dtos/query.dto';
 import { ValidateIdPipe } from '../pipes/validate-id.pipe';
 
+// These metadata keys are duplicated from their respective decorator files.
+// They are not exported to maintain encapsulation, but we need them here to
+// read the metadata for generating dynamic Swagger examples.
 const SERIALIZE_PROPERTY_METADATA_KEY = 'SERIALIZE_PROPERTY_METADATA_KEY';
 const QUERY_PROPERTY_METADATA_KEY = 'QUERY_PROPERTY_METADATA_KEY';
 
@@ -123,7 +126,8 @@ function generateEntityExamples<T extends CrudEntity>(entity: new () => T): {
     whereExample = JSON.stringify(whereObj);
   }
 
-  // Generate sort example using 'id' or the first field
+  // Generate sort example - prefer 'id' as it's always present in CrudEntity,
+  // fallback to first field if available, otherwise use 'id DESC' as default
   const sortField = regularFields.find(f => f.name === 'id') || regularFields[0];
   const sortExample = sortField ? `${sortField.name} DESC` : 'id DESC';
 
@@ -260,7 +264,7 @@ export class CrudControllerModule {
         required: false,
         type: 'string',
         description: 'Relations to populate (comma-separated)',
-        example: populateExample || undefined,
+        ...(populateExample ? { example: populateExample } : {}),
       })
       @ApiOkResponse({ type: RecordDto, isArray: true })
       async find(@Query() query?: ListQueryParamsRequestDto): Promise<T[]> {
