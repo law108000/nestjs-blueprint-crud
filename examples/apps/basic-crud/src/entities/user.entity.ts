@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import {
   CrudEntity,
   CreateProperty,
@@ -7,7 +7,9 @@ import {
   SerializeProperty,
   CrudProperty, // New unified decorator
 } from 'nestjs-blueprint-crud';
+import { Type } from 'class-transformer';
 import { Order } from './order.entity';
+import { Organization } from './organization.entity';
 
 @Entity('users')
 export class User extends CrudEntity {
@@ -85,6 +87,51 @@ export class User extends CrudEntity {
     description: 'Current user status',
   })
   status!: string;
+
+  @Column({ nullable: true })
+  @CreateProperty({
+    description: 'Organization ID',
+    type: 'number',
+    example: 1,
+    required: false,
+  })
+  @UpdateProperty({
+    description: 'Organization ID',
+    type: 'number',
+    example: 1,
+    required: false,
+  })
+  @QueryProperty({
+    description: 'Organization ID',
+    type: 'number',
+  })
+  @SerializeProperty({
+    description: 'Organization ID',
+  })
+  organizationId?: number;
+
+  @ManyToOne(() => Organization, (org) => org.users, { nullable: true })
+  @JoinColumn({ name: 'organizationId' })
+  @CreateProperty({
+    description: 'User organization',
+    required: false,
+  })
+  @UpdateProperty({
+    description: 'User organization',
+    required: false,
+  })
+  @QueryProperty({
+    isEntity: true,
+    entityName: 'Organization',
+    description: 'User organization',
+  })
+  @SerializeProperty({
+    isEntity: true,
+    entityName: 'Organization',
+    description: 'User organization',
+  })
+  @Type(() => Organization)
+  organization?: Organization;
 
   @OneToMany(() => Order, order => order.user)
   @SerializeProperty({
