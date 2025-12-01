@@ -181,7 +181,11 @@ export class WaterlineQueryService<T extends CrudEntity> {
       if (value === undefined) continue;
 
       const column = metadata.findColumnWithPropertyPath(key);
-      if (!column) continue;
+      if (!column) {
+        throw new BadRequestException(
+          `Invalid where key "${key}" for "${metadata.name}". This column does not exist.`,
+        );
+      }
 
       if (this.isFindOperator(value)) {
         this.applyFindOperator(query, operatorClause, alias, key, value);
@@ -246,12 +250,25 @@ export class WaterlineQueryService<T extends CrudEntity> {
     }
 
     if (criteria?.sort) {
+      const { metadata } = this.repository;
       if (typeof criteria.sort === 'string') {
         const [field, direction] = criteria.sort.split(' ');
+        const column = metadata.findColumnWithPropertyPath(field);
+        if (!column) {
+          throw new BadRequestException(
+            `Invalid sort key "${field}" for "${metadata.name}". This column does not exist.`,
+          );
+        }
         query.orderBy(`entity.${field}`, direction?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC');
       } else {
         criteria.sort.forEach(sortOption => {
           for (const field in sortOption) {
+            const column = metadata.findColumnWithPropertyPath(field);
+            if (!column) {
+              throw new BadRequestException(
+                `Invalid sort key "${field}" for "${metadata.name}". This column does not exist.`,
+              );
+            }
             query.addOrderBy(`entity.${field}`, sortOption[field]);
           }
         });
@@ -259,7 +276,18 @@ export class WaterlineQueryService<T extends CrudEntity> {
     }
 
     if (criteria?.select) {
-      const selectFields = criteria.select.split(',').map(field => `entity.${field.trim()}`);
+      const { metadata } = this.repository;
+      const selectFieldNames = criteria.select.split(',').map(field => field.trim());
+      // Validate all select fields
+      selectFieldNames.forEach(field => {
+        const column = metadata.findColumnWithPropertyPath(field);
+        if (!column) {
+          throw new BadRequestException(
+            `Invalid select key "${field}" for "${metadata.name}". This column does not exist.`,
+          );
+        }
+      });
+      const selectFields = selectFieldNames.map(field => `entity.${field}`);
       if (!selectFields.some(field => field.includes('.id'))) {
         selectFields.unshift('entity.id');
       }
@@ -276,8 +304,18 @@ export class WaterlineQueryService<T extends CrudEntity> {
       }
       query.select(selectFields);
     } else if (criteria?.omit) {
+      const { metadata } = this.repository;
       const omitFields = criteria.omit.split(',').map(field => field.trim());
-      const allColumns = this.repository.metadata.columns.map(column => column.propertyPath);
+      // Validate all omit fields
+      omitFields.forEach(field => {
+        const column = metadata.findColumnWithPropertyPath(field);
+        if (!column) {
+          throw new BadRequestException(
+            `Invalid omit key "${field}" for "${metadata.name}". This column does not exist.`,
+          );
+        }
+      });
+      const allColumns = metadata.columns.map(column => column.propertyPath);
       const selectFields = allColumns
         .filter(column => !omitFields.includes(column))
         .map(field => `entity.${field}`);
