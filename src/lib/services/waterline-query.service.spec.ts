@@ -1,4 +1,5 @@
 import type { DataSource } from 'typeorm';
+import { BadRequestException } from '@nestjs/common';
 import { WaterlineQueryService } from './waterline-query.service';
 
 describe('WaterlineQueryService', () => {
@@ -342,6 +343,72 @@ describe('WaterlineQueryService', () => {
       expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
         'entity.children',
         'populate_children',
+      );
+    });
+  });
+
+  describe('invalid populate keys', () => {
+    it('should throw BadRequestException for invalid populate key', async () => {
+      await expect(
+        service.findWithModifiers({
+          populate: 'nonExistentRelation',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          populate: 'nonExistentRelation',
+        }),
+      ).rejects.toThrow(
+        'Invalid populate key "nonExistentRelation" for "TestEntity". This relation does not exist.',
+      );
+    });
+
+    it('should throw BadRequestException for invalid populate key in array', async () => {
+      await expect(
+        service.findWithModifiers({
+          populate: ['children', 'invalidRelation'],
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          populate: ['children', 'invalidRelation'],
+        }),
+      ).rejects.toThrow(
+        'Invalid populate key "invalidRelation" for "TestEntity". This relation does not exist.',
+      );
+    });
+
+    it('should throw BadRequestException for invalid populate key with select', async () => {
+      await expect(
+        service.findWithModifiers({
+          populate: 'invalidRelation',
+          select: 'id,name',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          populate: 'invalidRelation',
+          select: 'id,name',
+        }),
+      ).rejects.toThrow(
+        'Invalid populate key "invalidRelation" for "TestEntity". This relation does not exist.',
+      );
+    });
+
+    it('should throw BadRequestException for invalid populate key with omit', async () => {
+      await expect(
+        service.findWithModifiers({
+          populate: 'invalidRelation',
+          omit: 'status',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          populate: 'invalidRelation',
+          omit: 'status',
+        }),
+      ).rejects.toThrow(
+        'Invalid populate key "invalidRelation" for "TestEntity". This relation does not exist.',
       );
     });
   });

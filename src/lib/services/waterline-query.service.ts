@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import {
   DataSource,
   type Repository,
@@ -222,8 +222,8 @@ export class WaterlineQueryService<T extends CrudEntity> {
       populateOptions.forEach((association: string) => {
         const relation = this.repository.metadata.findRelationWithPropertyPath(association);
         if (!relation) {
-          throw new Error(
-            `Invalid association "${association}" in "${this.repository.metadata.name}"`,
+          throw new BadRequestException(
+            `Invalid populate key "${association}" for "${this.repository.metadata.name}". This relation does not exist.`,
           );
         }
         query = query.leftJoinAndSelect(
@@ -267,7 +267,9 @@ export class WaterlineQueryService<T extends CrudEntity> {
         populateOptions.forEach((association: string) => {
           const relation = this.repository.metadata.findRelationWithPropertyPath(association);
           if (!relation) {
-            throw new Error(`Invalid association: ${association}`);
+            throw new BadRequestException(
+              `Invalid populate key "${association}" for "${this.repository.metadata.name}". This relation does not exist.`,
+            );
           }
           selectFields.push(`populate_${relation.propertyName}`);
         });
@@ -283,7 +285,9 @@ export class WaterlineQueryService<T extends CrudEntity> {
         populateOptions.forEach((association: string) => {
           const relation = this.repository.metadata.findRelationWithPropertyPath(association);
           if (!relation) {
-            throw new Error(`Invalid association: ${association}`);
+            throw new BadRequestException(
+              `Invalid populate key "${association}" for "${this.repository.metadata.name}". This relation does not exist.`,
+            );
           }
           selectFields.push(`populate_${relation.propertyName}`);
         });
