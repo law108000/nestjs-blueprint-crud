@@ -14,6 +14,8 @@ describe('WaterlineQueryService', () => {
       { propertyPath: 'name' },
       { propertyPath: 'status' },
       { propertyPath: 'age' },
+      { propertyPath: 'email' },
+      { propertyPath: 'createdAt' },
     ];
 
     const relation = {
@@ -108,6 +110,8 @@ describe('WaterlineQueryService', () => {
       'entity.id',
       'entity.name',
       'entity.age',
+      'entity.email',
+      'entity.createdAt',
       'populate_children',
     ]);
     expect(queryBuilder.orderBy).not.toHaveBeenCalled();
@@ -321,7 +325,12 @@ describe('WaterlineQueryService', () => {
         omit: 'name,status',
       });
 
-      expect(queryBuilder.select).toHaveBeenCalledWith(['entity.id', 'entity.age']);
+      expect(queryBuilder.select).toHaveBeenCalledWith([
+        'entity.id',
+        'entity.age',
+        'entity.email',
+        'entity.createdAt',
+      ]);
     });
 
     it('should handle populate as string', async () => {
@@ -409,6 +418,179 @@ describe('WaterlineQueryService', () => {
         }),
       ).rejects.toThrow(
         'Invalid populate key "invalidRelation" for "TestEntity". This relation does not exist.',
+      );
+    });
+  });
+
+  describe('invalid select keys', () => {
+    it('should throw BadRequestException for invalid select key', async () => {
+      await expect(
+        service.findWithModifiers({
+          select: 'nonExistentField',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          select: 'nonExistentField',
+        }),
+      ).rejects.toThrow(
+        'Invalid select key "nonExistentField" for "TestEntity". This column does not exist.',
+      );
+    });
+
+    it('should throw BadRequestException for invalid select key in comma-separated list', async () => {
+      await expect(
+        service.findWithModifiers({
+          select: 'id,name,invalidField',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          select: 'id,name,invalidField',
+        }),
+      ).rejects.toThrow(
+        'Invalid select key "invalidField" for "TestEntity". This column does not exist.',
+      );
+    });
+  });
+
+  describe('invalid omit keys', () => {
+    it('should throw BadRequestException for invalid omit key', async () => {
+      await expect(
+        service.findWithModifiers({
+          omit: 'nonExistentField',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          omit: 'nonExistentField',
+        }),
+      ).rejects.toThrow(
+        'Invalid omit key "nonExistentField" for "TestEntity". This column does not exist.',
+      );
+    });
+
+    it('should throw BadRequestException for invalid omit key in comma-separated list', async () => {
+      await expect(
+        service.findWithModifiers({
+          omit: 'id,invalidField',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          omit: 'id,invalidField',
+        }),
+      ).rejects.toThrow(
+        'Invalid omit key "invalidField" for "TestEntity". This column does not exist.',
+      );
+    });
+  });
+
+  describe('invalid sort keys', () => {
+    it('should throw BadRequestException for invalid sort key (string format)', async () => {
+      await expect(
+        service.findWithModifiers({
+          sort: 'nonExistentField ASC',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          sort: 'nonExistentField ASC',
+        }),
+      ).rejects.toThrow(
+        'Invalid sort key "nonExistentField" for "TestEntity". This column does not exist.',
+      );
+    });
+
+    it('should throw BadRequestException for invalid sort key (array format)', async () => {
+      await expect(
+        service.findWithModifiers({
+          sort: [{ invalidField: 'ASC' }],
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          sort: [{ invalidField: 'ASC' }],
+        }),
+      ).rejects.toThrow(
+        'Invalid sort key "invalidField" for "TestEntity". This column does not exist.',
+      );
+    });
+
+    it('should throw BadRequestException for invalid sort key in mixed valid/invalid array', async () => {
+      await expect(
+        service.findWithModifiers({
+          sort: [{ id: 'ASC' }, { nonExistent: 'DESC' }],
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          sort: [{ id: 'ASC' }, { nonExistent: 'DESC' }],
+        }),
+      ).rejects.toThrow(
+        'Invalid sort key "nonExistent" for "TestEntity". This column does not exist.',
+      );
+    });
+  });
+
+  describe('invalid where keys', () => {
+    it('should throw BadRequestException for invalid where key', async () => {
+      await expect(
+        service.findWithModifiers({
+          where: { nonExistentField: 'value' },
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          where: { nonExistentField: 'value' },
+        }),
+      ).rejects.toThrow(
+        'Invalid where key "nonExistentField" for "TestEntity". This column does not exist.',
+      );
+    });
+
+    it('should throw BadRequestException for invalid where key with modifier', async () => {
+      await expect(
+        service.findWithModifiers({
+          where: { invalidField: { '>': 10 } },
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          where: { invalidField: { '>': 10 } },
+        }),
+      ).rejects.toThrow(
+        'Invalid where key "invalidField" for "TestEntity". This column does not exist.',
+      );
+    });
+
+    it('should throw BadRequestException for invalid where key in nested or condition', async () => {
+      await expect(
+        service.findWithModifiers({
+          where: { or: [{ invalidField: 'value' }] },
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          where: { or: [{ invalidField: 'value' }] },
+        }),
+      ).rejects.toThrow(
+        'Invalid where key "invalidField" for "TestEntity". This column does not exist.',
+      );
+    });
+
+    it('should throw BadRequestException for invalid where key in nested and condition', async () => {
+      await expect(
+        service.findWithModifiers({
+          where: { and: [{ name: 'valid' }, { invalidField: 'value' }] },
+        }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findWithModifiers({
+          where: { and: [{ name: 'valid' }, { invalidField: 'value' }] },
+        }),
+      ).rejects.toThrow(
+        'Invalid where key "invalidField" for "TestEntity". This column does not exist.',
       );
     });
   });
