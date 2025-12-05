@@ -514,17 +514,19 @@ CrudControllerModule.forEntity({
 
 ## Extending Controllers
 
-When you need to override default CRUD endpoints with custom logic, you can extend `CrudController<T>` and easily access the DTO types. To ensure Swagger documentation works correctly for your custom endpoints, you should use the `generateSwaggerCreateUpdateDtoForEntity` helper.
+When you need to override default CRUD endpoints with custom logic, you can extend `CrudController<T>` and easily access the DTO types. To ensure Swagger documentation works correctly for your custom endpoints, you can use the `CrudApiBody`, `CrudApiQuery`, and `CrudApiResponse` decorators.
 
 ```typescript
 import { Controller, Query, Body, Param, Get, Post, Patch } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
-import { 
-  CrudController, 
-  CrudEntity, 
-  InjectCrudService, 
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import {
+  CrudController,
+  CrudEntity,
+  InjectCrudService,
   CrudService,
-  generateSwaggerCreateUpdateDtoForEntity 
+  CrudApiBody,
+  CrudApiQuery,
+  CrudApiResponse,
 } from 'nestjs-blueprint-crud';
 
 // 1. Define your entity
@@ -535,9 +537,6 @@ export class Product extends CrudEntity {
   name: string;
   // ... other properties
 }
-
-// 2. Generate Swagger DTOs
-const { CreateDto, UpdateDto } = generateSwaggerCreateUpdateDtoForEntity(Product);
 
 @Controller('products')
 @ApiTags('Products')
@@ -552,16 +551,18 @@ export class ProductController extends CrudController<Product> {
   // Override find with custom logic using namespace types
   @Get()
   @ApiOperation({ summary: 'Find all products with custom logging' })
+  @CrudApiResponse({ type: 'list', entity: Product })
   async find(@Query() query: CrudController.ListQueryRequest): Promise<Product[]> {
     console.log('Custom logic before finding products');
     return super.find(query);
   }
 
   // Override create with validation using namespace types
-  // Use @ApiBody with the generated CreateDto for correct Swagger docs
+  // Use @CrudApiBody(Entity, 'create') for correct Swagger docs
   @Post()
   @ApiOperation({ summary: 'Create product with validation' })
-  @ApiBody({ type: CreateDto })
+  @CrudApiResponse({ type: 'create', entity: Product })
+  @CrudApiBody(Product, 'create')
   async create(@Body() entity: CrudController.CreateRequest<Product>): Promise<Product> {
     // Add custom validation
     if (!entity.name) {
@@ -573,16 +574,19 @@ export class ProductController extends CrudController<Product> {
   // Override update
   @Patch(':id')
   @ApiOperation({ summary: 'Update product' })
-  @ApiBody({ type: UpdateDto })
+  @CrudApiResponse({ type: 'update', entity: Product })
+  @CrudApiBody(Product, 'update')
   async update(
-    @Param('id') id: number, 
-    @Body() entity: CrudController.UpdateRequest<Product>
+    @Param('id') id: number,
+    @Body() entity: CrudController.UpdateRequest<Product>,
   ): Promise<Product> {
     return super.update(id, entity);
   }
 
   // Add a completely custom endpoint
   @Get('featured')
+  @CrudApiQuery('list') // Adds standard query params (where, limit, sort, etc.) to Swagger
+  @CrudApiResponse({ type: 'list', entity: Product })
   async findFeatured(@Query() query: CrudController.ListQueryRequest): Promise<Product[]> {
     // Custom query logic
     return this.crudService.find({

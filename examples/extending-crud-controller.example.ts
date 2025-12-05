@@ -6,7 +6,7 @@
  */
 
 import { Controller, Query, Body, Param, Get, Post, Patch, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { Entity, Column } from 'typeorm';
 import {
   CrudController,
@@ -16,6 +16,9 @@ import {
   generateSwaggerCreateUpdateDtoForEntity,
   CreateProperty,
   UpdateProperty,
+  CrudApiBody,
+  CrudApiQuery,
+  CrudApiResponse,
 } from 'nestjs-blueprint-crud';
 
 // Define your entity
@@ -77,11 +80,11 @@ export class ProductController extends CrudController<Product> {
 
   // Override create with validation
   // Use CrudController.CreateRequest<Product> for type safety
-  // Use @ApiBody({ type: CreateDto }) for Swagger documentation
+  // Use @CrudApiBody(Product, 'create') for Swagger documentation
   @Post()
   @ApiOperation({ summary: 'Create product with validation' })
-  @ApiResponse({ status: 201, description: 'Product created successfully' })
-  @ApiBody({ type: CreateDto })
+  @CrudApiResponse({ type: 'create', entity: Product })
+  @CrudApiBody(Product, 'create')
   async create(@Body() entity: CrudController.CreateRequest<Product>): Promise<Product> {
     // Add custom validation
     if (!entity.name || entity.name.length < 3) {
@@ -98,10 +101,10 @@ export class ProductController extends CrudController<Product> {
 
   // Override update with business logic
   // Use CrudController.UpdateRequest<Product> for type safety
-  // Use @ApiBody({ type: UpdateDto }) for Swagger documentation
+  // Use @CrudApiBody(Product, 'update') for Swagger documentation
   @Patch(':id')
   @ApiOperation({ summary: 'Update product with business rules' })
-  @ApiBody({ type: UpdateDto })
+  @CrudApiBody(Product, 'update')
   async update(
     @Param('id') id: number,
     @Body() entity: CrudController.UpdateRequest<Product>,
@@ -120,6 +123,7 @@ export class ProductController extends CrudController<Product> {
   // Add custom endpoint using the service
   @Get('featured')
   @ApiOperation({ summary: 'Get featured products' })
+  @CrudApiQuery('list')
   async findFeatured(@Query() query: CrudController.ListQueryRequest): Promise<Product[]> {
     // Combine query with featured filter
     const whereClause = query.where ? JSON.parse(query.where) : {};
