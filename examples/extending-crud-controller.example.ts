@@ -149,7 +149,7 @@ export class AdvancedProductController extends CrudController<Product> {
     defaultQuery.limit = 50;
     defaultQuery.sort = 'createdAt DESC';
     
-    const finalQuery = query || (defaultQuery as CrudController.ListQueryRequest);
+    const finalQuery = query || defaultQuery;
     return super.find(finalQuery);
   }
 
@@ -163,7 +163,7 @@ export class AdvancedProductController extends CrudController<Product> {
     const defaultQuery = new CrudController.GetQueryRequestDto();
     defaultQuery.populate = 'category,supplier';
     
-    const finalQuery = query || (defaultQuery as CrudController.GetQueryRequest);
+    const finalQuery = query || defaultQuery;
     return super.findOne(id, finalQuery);
   }
 }

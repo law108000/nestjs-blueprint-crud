@@ -162,7 +162,7 @@ export class CrudController<T extends CrudEntity> {
 }
 
 // Namespace for type exports to enable convenient access to DTO types
-// Usage: CrudController.Types.ListQueryRequest, etc.
+// Usage: CrudController.ListQueryRequest, CrudController.CreateRequest, etc.
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace CrudController {
   export type ListQueryRequest = ListQueryParamsRequestDto;
