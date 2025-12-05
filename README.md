@@ -514,13 +514,33 @@ CrudControllerModule.forEntity({
 
 ## Extending Controllers
 
-When you need to override default CRUD endpoints with custom logic, you can extend `CrudController<T>` and easily access the DTO types:
+When you need to override default CRUD endpoints with custom logic, you can extend `CrudController<T>` and easily access the DTO types. To ensure Swagger documentation works correctly for your custom endpoints, you should use the `generateSwaggerCreateUpdateDtoForEntity` helper.
 
 ```typescript
 import { Controller, Query, Body, Param, Get, Post, Patch } from '@nestjs/common';
-import { CrudController, CrudEntity, InjectCrudService, CrudService } from 'nestjs-blueprint-crud';
+import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { 
+  CrudController, 
+  CrudEntity, 
+  InjectCrudService, 
+  CrudService,
+  generateSwaggerCreateUpdateDtoForEntity 
+} from 'nestjs-blueprint-crud';
+
+// 1. Define your entity
+@Entity()
+export class Product extends CrudEntity {
+  @Column()
+  @CreateProperty({ description: 'Product name' })
+  name: string;
+  // ... other properties
+}
+
+// 2. Generate Swagger DTOs
+const { CreateDto, UpdateDto } = generateSwaggerCreateUpdateDtoForEntity(Product);
 
 @Controller('products')
+@ApiTags('Products')
 export class ProductController extends CrudController<Product> {
   constructor(
     @InjectCrudService(Product)
@@ -531,19 +551,34 @@ export class ProductController extends CrudController<Product> {
 
   // Override find with custom logic using namespace types
   @Get()
+  @ApiOperation({ summary: 'Find all products with custom logging' })
   async find(@Query() query: CrudController.ListQueryRequest): Promise<Product[]> {
     console.log('Custom logic before finding products');
     return super.find(query);
   }
 
   // Override create with validation using namespace types
+  // Use @ApiBody with the generated CreateDto for correct Swagger docs
   @Post()
-  async create(@Body() entity: CrudController.CreateRequest): Promise<Product> {
+  @ApiOperation({ summary: 'Create product with validation' })
+  @ApiBody({ type: CreateDto })
+  async create(@Body() entity: CrudController.CreateRequest<Product>): Promise<Product> {
     // Add custom validation
     if (!entity.name) {
       throw new Error('Product name is required');
     }
     return super.create(entity);
+  }
+
+  // Override update
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update product' })
+  @ApiBody({ type: UpdateDto })
+  async update(
+    @Param('id') id: number, 
+    @Body() entity: CrudController.UpdateRequest<Product>
+  ): Promise<Product> {
+    return super.update(id, entity);
   }
 
   // Add a completely custom endpoint
@@ -565,8 +600,8 @@ The `CrudController` class provides easy access to DTO types through a namespace
 - `CrudController.ListQueryRequest` - For list/find operations with filtering, pagination, sorting
 - `CrudController.GetQueryRequest` - For single entity queries with select, omit, populate
 - `CrudController.CountRequest` - For count operations with filtering
-- `CrudController.CreateRequest` - For create operations
-- `CrudController.UpdateRequest` - For update operations
+- `CrudController.CreateRequest<T>` - For create operations (generic for type safety)
+- `CrudController.UpdateRequest<T>` - For update operations (generic for type safety)
 
 You can also access the DTO classes directly via static properties for instantiation:
 
