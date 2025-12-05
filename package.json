@@ -1,6 +1,6 @@
 {
   "name": "nestjs-blueprint-crud",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "A NestJS library for automatic CRUD operations with TypeORM, inspired by SailsJS Blueprint API and Waterline ORM",
   "keywords": [
     "nestjs",
