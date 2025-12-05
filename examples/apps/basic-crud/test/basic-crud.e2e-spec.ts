@@ -1,10 +1,10 @@
 import request from 'supertest';
-import type { ExampleTestContext } from '../../../tooling/test-helpers';
 import {
   DEFAULT_TABLE_RESET_ORDER,
   bootstrapExampleApp,
   closeExampleApp,
   truncateTables,
+  type ExampleTestContext,
 } from '../../../tooling/test-helpers';
 import { AppModule } from '../src/app.module';
 

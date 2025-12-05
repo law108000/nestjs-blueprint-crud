@@ -98,7 +98,7 @@ export class ProductController extends CrudController<Product> {
   async findFeatured(@Query() query: CrudController.ListQueryRequest): Promise<Product[]> {
     // Combine query with featured filter
     const whereClause = query.where ? JSON.parse(query.where) : {};
-    const featuredQuery: CrudController.ListQueryRequest = {
+    const _featuredQuery: CrudController.ListQueryRequest = {
       ...query,
       where: JSON.stringify({ ...whereClause, featured: true }),
     };

@@ -8,6 +8,12 @@ module.exports = {
   moduleNameMapper: {
     '^nestjs-blueprint-crud$': '<rootDir>/src/index.ts',
   },
+  transform: {
+    '^.+\\.(t|j)s$': 'ts-jest',
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(uuid)/)'
+  ],
   globals: {
     'ts-jest': {
       tsconfig: '<rootDir>/tsconfig.e2e.json',
