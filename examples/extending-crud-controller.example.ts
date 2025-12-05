@@ -8,14 +8,14 @@
 import { Controller, Query, Body, Param, Get, Post, Patch, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Entity, Column } from 'typeorm';
-import { 
-  CrudController, 
-  CrudEntity, 
-  InjectCrudService, 
+import {
+  CrudController,
+  CrudEntity,
+  InjectCrudService,
   CrudService,
   generateSwaggerCreateUpdateDtoForEntity,
   CreateProperty,
-  UpdateProperty
+  UpdateProperty,
 } from 'nestjs-blueprint-crud';
 
 // Define your entity
