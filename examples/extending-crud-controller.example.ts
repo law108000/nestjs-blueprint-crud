@@ -6,28 +6,49 @@
  */
 
 import { Controller, Query, Body, Param, Get, Post, Patch, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Entity, Column } from 'typeorm';
-import { CrudController, CrudEntity, InjectCrudService, CrudService } from 'nestjs-blueprint-crud';
+import { 
+  CrudController, 
+  CrudEntity, 
+  InjectCrudService, 
+  CrudService,
+  generateSwaggerCreateUpdateDtoForEntity,
+  CreateProperty,
+  UpdateProperty
+} from 'nestjs-blueprint-crud';
 
 // Define your entity
 @Entity()
-class Product extends CrudEntity {
+export class Product extends CrudEntity {
   @Column()
-  name: string;
+  @CreateProperty({ description: 'Product name', example: 'Laptop' })
+  @UpdateProperty({ description: 'Product name', example: 'Laptop' })
+  name!: string;
 
   @Column()
-  description: string;
+  @CreateProperty({ description: 'Product description' })
+  @UpdateProperty({ description: 'Product description' })
+  description!: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
-  price: number;
+  @CreateProperty({ description: 'Product price', example: 999.99 })
+  @UpdateProperty({ description: 'Product price', example: 999.99 })
+  price!: number;
 
   @Column({ default: false })
-  featured: boolean;
+  @CreateProperty({ description: 'Is featured?' })
+  @UpdateProperty({ description: 'Is featured?' })
+  featured!: boolean;
 
   @Column({ default: 'active' })
-  status: 'active' | 'inactive' | 'discontinued';
+  @CreateProperty({ description: 'Product status', enum: ['active', 'inactive', 'discontinued'] })
+  @UpdateProperty({ description: 'Product status', enum: ['active', 'inactive', 'discontinued'] })
+  status!: 'active' | 'inactive' | 'discontinued';
 }
+
+// Generate Swagger DTOs for the entity
+const { CreateDto, UpdateDto } = generateSwaggerCreateUpdateDtoForEntity(Product);
 
 /**
  * Example 1: Basic Controller Extension
@@ -55,11 +76,13 @@ export class ProductController extends CrudController<Product> {
   }
 
   // Override create with validation
-  // Use CrudController.CreateRequest for type safety
+  // Use CrudController.CreateRequest<Product> for type safety
+  // Use @ApiBody({ type: CreateDto }) for Swagger documentation
   @Post()
   @ApiOperation({ summary: 'Create product with validation' })
   @ApiResponse({ status: 201, description: 'Product created successfully' })
-  async create(@Body() entity: CrudController.CreateRequest): Promise<Product> {
+  @ApiBody({ type: CreateDto })
+  async create(@Body() entity: CrudController.CreateRequest<Product>): Promise<Product> {
     // Add custom validation
     if (!entity.name || entity.name.length < 3) {
       throw new Error('Product name must be at least 3 characters long');
@@ -74,12 +97,14 @@ export class ProductController extends CrudController<Product> {
   }
 
   // Override update with business logic
-  // Use CrudController.UpdateRequest for type safety
+  // Use CrudController.UpdateRequest<Product> for type safety
+  // Use @ApiBody({ type: UpdateDto }) for Swagger documentation
   @Patch(':id')
   @ApiOperation({ summary: 'Update product with business rules' })
+  @ApiBody({ type: UpdateDto })
   async update(
     @Param('id') id: number,
-    @Body() entity: CrudController.UpdateRequest,
+    @Body() entity: CrudController.UpdateRequest<Product>,
   ): Promise<Product> {
     // Check if trying to set negative price
     if (typeof entity.price === 'number' && entity.price < 0) {
@@ -202,14 +227,16 @@ export class TypedProductController extends CrudController<Product> {
   }
 
   @Post()
-  async create(@Body() entity: CrudController.CreateRequest): Promise<Product> {
+  @ApiBody({ type: CreateDto })
+  async create(@Body() entity: CrudController.CreateRequest<Product>): Promise<Product> {
     return super.create(entity);
   }
 
   @Patch(':id')
+  @ApiBody({ type: UpdateDto })
   async update(
     @Param('id') id: number,
-    @Body() entity: CrudController.UpdateRequest,
+    @Body() entity: CrudController.UpdateRequest<Product>,
   ): Promise<Product> {
     return super.update(id, entity);
   }
@@ -223,7 +250,7 @@ export class TypedProductController extends CrudController<Product> {
 /**
  * Key Benefits of Using CrudController DTO Types:
  *
- * 1. Type Safety: Full TypeScript checking for all parameters
+ * 1. Type Safety: Full TypeScript checking for all parameters (when using generics)
  * 2. Consistency: All DTOs accessible from one place
  * 3. Discoverability: IDE autocomplete shows available types
  * 4. Maintainability: Changes to DTOs automatically propagate
@@ -233,8 +260,8 @@ export class TypedProductController extends CrudController<Product> {
  * - CrudController.ListQueryRequest (for find operations)
  * - CrudController.GetQueryRequest (for findOne operations)
  * - CrudController.CountRequest (for count operations)
- * - CrudController.CreateRequest (for create operations)
- * - CrudController.UpdateRequest (for update operations)
+ * - CrudController.CreateRequest<T> (for create operations)
+ * - CrudController.UpdateRequest<T> (for update operations)
  *
  * Available Static Classes (for instantiation):
  * - CrudController.ListQueryRequestDto

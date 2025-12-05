@@ -120,5 +120,9 @@ export class ReplaceAssociationsDto {
   ids?: (number | string)[];
 }
 
-export type CreateRequestDto = Record<string, unknown>;
-export type UpdateRequestDto = Record<string, unknown>;
+export type CreateRequestDto<T> = Partial<T>;
+export type UpdateRequestDto<T> = Partial<T>;
+
+// Placeholder classes for Swagger @ApiBody usage
+export class GenericCreateRequestDto {}
+export class GenericUpdateRequestDto {}

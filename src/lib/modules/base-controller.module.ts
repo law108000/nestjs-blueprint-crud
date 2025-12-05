@@ -191,7 +191,7 @@ export class CrudControllerModule {
       )
       @ApiBody({ type: CreateDto })
       @ApiOkResponse({ type: RecordDto })
-      async create(@Body() entity: CreateRequestDto = new CreateDto()): Promise<T> {
+      async create(@Body() entity: CreateRequestDto<T> = new CreateDto() as any): Promise<T> {
         if (!create) throw new ForbiddenException();
         return await super.create(entity);
       }
@@ -202,7 +202,7 @@ export class CrudControllerModule {
       @ApiOkResponse({ type: [RecordDto] })
       async bulkUpdate(
         @Query() query: Record<string, string>,
-        @Body() entity: UpdateRequestDto,
+        @Body() entity: UpdateRequestDto<T>,
       ): Promise<T[]> {
         const { ids } = query;
         const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
@@ -223,7 +223,7 @@ export class CrudControllerModule {
       @ApiOkResponse({ type: RecordDto })
       async update(
         @Param('id', ValidateIdPipe) id: number,
-        @Body() entity: UpdateRequestDto = new UpdateDto(),
+        @Body() entity: UpdateRequestDto<T> = new UpdateDto() as any,
       ): Promise<T> {
         if (!update) throw new ForbiddenException();
         return await super.update(id, entity);

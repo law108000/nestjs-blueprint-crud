@@ -19,8 +19,10 @@ import {
   ListQueryParamsRequestDto,
   GetQueryParamsRequestDto,
   CountRequestDto,
-  CreateRequestDto,
-  UpdateRequestDto,
+  CreateRequestDto as QueryCreateRequestDto,
+  UpdateRequestDto as QueryUpdateRequestDto,
+  GenericCreateRequestDto,
+  GenericUpdateRequestDto,
 } from '../dtos/query.dto';
 
 export class CrudController<T extends CrudEntity> {
@@ -30,6 +32,8 @@ export class CrudController<T extends CrudEntity> {
   static readonly ListQueryRequestDto = ListQueryParamsRequestDto;
   static readonly GetQueryRequestDto = GetQueryParamsRequestDto;
   static readonly CountRequestDto = CountRequestDto;
+  static readonly CreateRequestDto = GenericCreateRequestDto;
+  static readonly UpdateRequestDto = GenericUpdateRequestDto;
 
   constructor(protected readonly crudService: CrudService<T>) {}
 
@@ -91,7 +95,7 @@ export class CrudController<T extends CrudEntity> {
   @ApiOperation({ summary: 'Create new entity' })
   @ApiResponse({ status: 200, description: 'Entity created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async create(@Body() entity: CreateRequestDto): Promise<T> {
+  async create(@Body() entity: QueryCreateRequestDto<T>): Promise<T> {
     return this.crudService.create(entity as Partial<T>);
   }
 
@@ -100,7 +104,7 @@ export class CrudController<T extends CrudEntity> {
   @HttpCode(200)
   @ApiOperation({ summary: 'Create multiple entities' })
   @ApiResponse({ status: 200, description: 'Entities created successfully', isArray: true })
-  async bulkCreate(@Body() entities: CreateRequestDto[]): Promise<T[]> {
+  async bulkCreate(@Body() entities: QueryCreateRequestDto<T>[]): Promise<T[]> {
     return this.crudService.bulkCreate(entities as Partial<T>[]);
   }
 
@@ -110,7 +114,7 @@ export class CrudController<T extends CrudEntity> {
   @ApiResponse({ status: 200, description: 'Entities updated successfully', isArray: true })
   async bulkUpdate(
     @Query() query: Record<string, string>,
-    @Body() entity: UpdateRequestDto,
+    @Body() entity: QueryUpdateRequestDto<T>,
   ): Promise<T[]> {
     const { ids } = query;
     const idArray = ids.split(',').map(id => parseInt(id.trim(), 10));
@@ -135,7 +139,7 @@ export class CrudController<T extends CrudEntity> {
   @ApiResponse({ status: 404, description: 'Entity not found' })
   async update(
     @Param('id', ValidateIdPipe) id: number,
-    @Body() entity: UpdateRequestDto,
+    @Body() entity: QueryUpdateRequestDto<T>,
   ): Promise<T> {
     return this.crudService.update(id, entity as Partial<T>);
   }
@@ -168,6 +172,8 @@ export namespace CrudController {
   export type ListQueryRequest = ListQueryParamsRequestDto;
   export type GetQueryRequest = GetQueryParamsRequestDto;
   export type CountRequest = CountRequestDto;
-  export type CreateRequest = CreateRequestDto;
-  export type UpdateRequest = UpdateRequestDto;
+  export type CreateRequest<T = any> = QueryCreateRequestDto<T>;
+  export type UpdateRequest<T = any> = QueryUpdateRequestDto<T>;
+  export type CreateRequestDto<T = any> = QueryCreateRequestDto<T>;
+  export type UpdateRequestDto<T = any> = QueryUpdateRequestDto<T>;
 }
