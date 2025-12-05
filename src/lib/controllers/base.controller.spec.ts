@@ -1,5 +1,10 @@
 import { CrudController } from './base.controller';
 import type { CrudService } from '../services/base.service';
+import {
+  ListQueryParamsRequestDto,
+  GetQueryParamsRequestDto,
+  CountRequestDto,
+} from '../dtos/query.dto';
 
 describe('CrudController', () => {
   let controller: CrudController<any>;
@@ -230,6 +235,88 @@ describe('CrudController', () => {
         omit: '',
         populate: undefined,
       });
+    });
+  });
+
+  describe('Static DTO class references', () => {
+    it('should expose ListQueryRequestDto as a static property', () => {
+      expect(CrudController.ListQueryRequestDto).toBe(ListQueryParamsRequestDto);
+    });
+
+    it('should expose GetQueryRequestDto as a static property', () => {
+      expect(CrudController.GetQueryRequestDto).toBe(GetQueryParamsRequestDto);
+    });
+
+    it('should expose CountRequestDto as a static property', () => {
+      expect(CrudController.CountRequestDto).toBe(CountRequestDto);
+    });
+
+    it('should allow using static DTO classes to create instances', () => {
+      const listQuery = new CrudController.ListQueryRequestDto();
+      expect(listQuery).toBeInstanceOf(ListQueryParamsRequestDto);
+
+      const getQuery = new CrudController.GetQueryRequestDto();
+      expect(getQuery).toBeInstanceOf(GetQueryParamsRequestDto);
+
+      const countQuery = new CrudController.CountRequestDto();
+      expect(countQuery).toBeInstanceOf(CountRequestDto);
+    });
+  });
+
+  describe('Type namespace exports', () => {
+    it('should allow using namespace types in extended controllers', () => {
+      interface TestEntity {
+        id: number;
+        name: string;
+      }
+
+      class ExtendedController extends CrudController<any> {
+        // Test that we can use the namespace types in method signatures
+        async find(query: CrudController.ListQueryRequest): Promise<TestEntity[]> {
+          return super.find(query);
+        }
+
+        async findOne(id: number, query: CrudController.GetQueryRequest): Promise<TestEntity> {
+          return super.findOne(id, query);
+        }
+
+        async count(query: CrudController.CountRequest): Promise<{ count: number }> {
+          return super.count(query);
+        }
+
+        async create(entity: CrudController.CreateRequest): Promise<TestEntity> {
+          return super.create(entity);
+        }
+
+        async update(id: number, entity: CrudController.UpdateRequest): Promise<TestEntity> {
+          return super.update(id, entity);
+        }
+      }
+
+      const extendedController = new ExtendedController(service);
+      expect(extendedController).toBeInstanceOf(CrudController);
+      expect(extendedController).toBeInstanceOf(ExtendedController);
+    });
+
+    it('should have correct type definitions in the namespace', () => {
+      // This is a compile-time check that the types exist and are correct
+      // These type assignments verify the namespace exports are correctly typed
+      const checkTypes = (): void => {
+        const _listQuery: CrudController.ListQueryRequest = {} as any;
+        const _getQuery: CrudController.GetQueryRequest = {} as any;
+        const _count: CrudController.CountRequest = {} as any;
+        const _create: CrudController.CreateRequest = {} as any;
+        const _update: CrudController.UpdateRequest = {} as any;
+        // Suppress unused variable warning
+        void _listQuery;
+        void _getQuery;
+        void _count;
+        void _create;
+        void _update;
+      };
+
+      // If this function compiles, the types are correctly defined
+      expect(checkTypes).toBeDefined();
     });
   });
 });
