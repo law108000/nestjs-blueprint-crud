@@ -61,7 +61,7 @@ export class ProductController extends CrudController<Product> {
   @Get(':id')
   async findOne(
     @Param('id') id: number,
-    @Query() query: CrudController.GetQueryRequest
+    @Query() query: CrudController.GetQueryRequest,
   ): Promise<Product> {
     // Add custom logic
     return super.findOne(id, query);
@@ -76,7 +76,7 @@ export class ProductController extends CrudController<Product> {
   @Patch(':id')
   async update(
     @Param('id') id: number,
-    @Body() entity: CrudController.UpdateRequest
+    @Body() entity: CrudController.UpdateRequest,
   ): Promise<Product> {
     // Add custom update logic
     return super.update(id, entity);
@@ -93,13 +93,15 @@ export class ProductController extends CrudController<Product> {
 ## Available Types
 
 ### Via Static Properties (for instantiation)
+
 - `CrudController.ListQueryRequestDto` - For list/find queries
 - `CrudController.GetQueryRequestDto` - For single entity queries
 - `CrudController.CountRequestDto` - For count queries
 
 ### Via Namespace (for type annotations)
+
 - `CrudController.ListQueryRequest` - For list/find queries
-- `CrudController.GetQueryRequest` - For single entity queries  
+- `CrudController.GetQueryRequest` - For single entity queries
 - `CrudController.CountRequest` - For count queries
 - `CrudController.CreateRequest` - For create operations
 - `CrudController.UpdateRequest` - For update operations
@@ -114,6 +116,7 @@ export class ProductController extends CrudController<Product> {
 ## Migration from Direct Imports
 
 Before:
+
 ```typescript
 import { ListQueryParamsRequestDto, CreateRequestDto } from 'nestjs-blueprint-crud';
 
@@ -124,6 +127,7 @@ class MyController extends CrudController<MyEntity> {
 ```
 
 After:
+
 ```typescript
 import { CrudController } from 'nestjs-blueprint-crud';
 

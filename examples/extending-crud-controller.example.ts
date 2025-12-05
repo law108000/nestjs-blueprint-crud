@@ -1,6 +1,6 @@
 /**
  * Example: Extending CrudController with Custom Logic
- * 
+ *
  * This example demonstrates how to extend CrudController and override default endpoints
  * while maintaining full type safety by using the exposed DTO types.
  */
@@ -64,7 +64,7 @@ export class ProductController extends CrudController<Product> {
     if (!entity.name || entity.name.length < 3) {
       throw new Error('Product name must be at least 3 characters long');
     }
-    
+
     if (typeof entity.price === 'number' && entity.price < 0) {
       throw new Error('Product price must be positive');
     }
@@ -88,7 +88,7 @@ export class ProductController extends CrudController<Product> {
 
     // Add audit log
     console.log('[ProductController] Updating product %s with:', id, entity);
-    
+
     return super.update(id, entity);
   }
 
@@ -102,7 +102,7 @@ export class ProductController extends CrudController<Product> {
       ...query,
       where: JSON.stringify({ ...whereClause, featured: true }),
     };
-    
+
     return this.crudService.find({
       where: { ...whereClause, featured: true },
       limit: query.limit,
@@ -148,7 +148,7 @@ export class AdvancedProductController extends CrudController<Product> {
     const defaultQuery = new CrudController.ListQueryRequestDto();
     defaultQuery.limit = 50;
     defaultQuery.sort = 'createdAt DESC';
-    
+
     const finalQuery = query ?? defaultQuery;
     return super.find(finalQuery);
   }
@@ -162,7 +162,7 @@ export class AdvancedProductController extends CrudController<Product> {
     // Create default query with populated relationships
     const defaultQuery = new CrudController.GetQueryRequestDto();
     defaultQuery.populate = 'category,supplier';
-    
+
     const finalQuery = query ?? defaultQuery;
     return super.findOne(id, finalQuery);
   }
@@ -222,20 +222,20 @@ export class TypedProductController extends CrudController<Product> {
 
 /**
  * Key Benefits of Using CrudController DTO Types:
- * 
+ *
  * 1. Type Safety: Full TypeScript checking for all parameters
  * 2. Consistency: All DTOs accessible from one place
  * 3. Discoverability: IDE autocomplete shows available types
  * 4. Maintainability: Changes to DTOs automatically propagate
  * 5. Less Imports: No need to import each DTO separately
- * 
+ *
  * Available Types:
  * - CrudController.ListQueryRequest (for find operations)
  * - CrudController.GetQueryRequest (for findOne operations)
  * - CrudController.CountRequest (for count operations)
  * - CrudController.CreateRequest (for create operations)
  * - CrudController.UpdateRequest (for update operations)
- * 
+ *
  * Available Static Classes (for instantiation):
  * - CrudController.ListQueryRequestDto
  * - CrudController.GetQueryRequestDto
