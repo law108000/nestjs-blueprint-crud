@@ -87,7 +87,7 @@ export class ProductController extends CrudController<Product> {
     }
 
     // Add audit log
-    console.log(`[ProductController] Updating product ${id} with:`, entity);
+    console.log('[ProductController] Updating product %s with:', id, entity);
     
     return super.update(id, entity);
   }
