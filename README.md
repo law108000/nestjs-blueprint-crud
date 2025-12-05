@@ -512,6 +512,69 @@ CrudControllerModule.forEntity({
 });
 ```
 
+## Extending Controllers
+
+When you need to override default CRUD endpoints with custom logic, you can extend `CrudController<T>` and easily access the DTO types:
+
+```typescript
+import { Controller, Query, Body, Param, Get, Post, Patch } from '@nestjs/common';
+import { CrudController, CrudEntity, InjectCrudService, CrudService } from 'nestjs-blueprint-crud';
+
+@Controller('products')
+export class ProductController extends CrudController<Product> {
+  constructor(
+    @InjectCrudService(Product)
+    protected readonly crudService: CrudService<Product>,
+  ) {
+    super(crudService);
+  }
+
+  // Override find with custom logic using namespace types
+  @Get()
+  async find(@Query() query: CrudController.ListQueryRequest): Promise<Product[]> {
+    console.log('Custom logic before finding products');
+    return super.find(query);
+  }
+
+  // Override create with validation using namespace types
+  @Post()
+  async create(@Body() entity: CrudController.CreateRequest): Promise<Product> {
+    // Add custom validation
+    if (!entity.name) {
+      throw new Error('Product name is required');
+    }
+    return super.create(entity);
+  }
+
+  // Add a completely custom endpoint
+  @Get('featured')
+  async findFeatured(@Query() query: CrudController.ListQueryRequest): Promise<Product[]> {
+    // Custom query logic
+    return this.crudService.find({
+      where: { featured: true },
+      ...query,
+    });
+  }
+}
+```
+
+### Available DTO Types
+
+The `CrudController` class provides easy access to DTO types through a namespace:
+
+- `CrudController.ListQueryRequest` - For list/find operations with filtering, pagination, sorting
+- `CrudController.GetQueryRequest` - For single entity queries with select, omit, populate
+- `CrudController.CountRequest` - For count operations with filtering
+- `CrudController.CreateRequest` - For create operations
+- `CrudController.UpdateRequest` - For update operations
+
+You can also access the DTO classes directly via static properties for instantiation:
+
+```typescript
+const defaultQuery = new CrudController.ListQueryRequestDto();
+const getQuery = new CrudController.GetQueryRequestDto();
+```
+
 ## Swagger Documentation
 
 The package automatically generates Swagger documentation for all endpoints, including:

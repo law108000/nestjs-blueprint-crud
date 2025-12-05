@@ -26,6 +26,11 @@ import {
 export class CrudController<T extends CrudEntity> {
   protected readonly logger = new Logger(CrudController.name);
 
+  // Static DTO class references for easy reuse when extending this controller
+  static readonly ListQueryRequestDto = ListQueryParamsRequestDto;
+  static readonly GetQueryRequestDto = GetQueryParamsRequestDto;
+  static readonly CountRequestDto = CountRequestDto;
+
   constructor(protected readonly crudService: CrudService<T>) {}
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -154,4 +159,15 @@ export class CrudController<T extends CrudEntity> {
   async restore(@Param('id', ValidateIdPipe) id: number): Promise<T> {
     return this.crudService.restore(id);
   }
+}
+
+// Namespace for type exports to enable convenient access to DTO types
+// Usage: CrudController.Types.ListQueryRequest, etc.
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace CrudController {
+  export type ListQueryRequest = ListQueryParamsRequestDto;
+  export type GetQueryRequest = GetQueryParamsRequestDto;
+  export type CountRequest = CountRequestDto;
+  export type CreateRequest = CreateRequestDto;
+  export type UpdateRequest = UpdateRequestDto;
 }
